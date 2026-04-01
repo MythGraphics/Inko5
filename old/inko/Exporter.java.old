@@ -1,0 +1,62 @@
+package inko;
+
+/**
+ *
+ * @author Martin Pröhl alias MythGraphics
+ * @version 1.0.2
+ *
+ */
+
+import dataformat.xml.Descriptor;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+public class Exporter implements Closeable {
+
+    private final File file;
+    private PrintWriter out;
+
+    public Exporter(File file) {
+        this.file = file;
+    }
+
+    private boolean isWriterUnset() {
+        return (out == null);
+    }
+
+    public void append(Patient p) throws IOException {
+        appendRAW( p.toString() );
+    }
+
+    public void append(String[] array) throws IOException {
+        appendRAW( new Patient_old( new Descriptor(), Patient.PARAM_NAMES, array ).toString() );
+    }
+
+    public void appendRAW(String line) throws IOException {
+        if ( isWriterUnset() ) {
+            this.out = new PrintWriter( new FileWriter(file, true) );
+        }
+        out.println(line);
+        out.flush();
+    }
+
+    public void write(Patient[] patienten) throws IOException {
+        if ( !isWriterUnset() ) throw new IOException("PrintWriter already open.");
+        this.out = new PrintWriter( new FileWriter(file, false) );
+        for (Patient p : patienten) {
+            if (p == null) {continue;}
+            out.println( p.toString() );
+        }
+        out.flush();
+    }
+
+    @Override
+    public void close() {
+        out.close();
+        out = null;
+    }
+
+}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--    <meta name="viewport" content="width=595, height=842, initial-scale=1.0">                   --><!-- DIN A4 -->
+        <title>Patientenliste Rezeptabrechnung</title>
+        <style>
+            h1 {
+                font-size: x-large;
+            }
+            table {
+                border: 1px solid #808080;
+                border-collapse: collapse;
+                border-spacing: none;
+                table-layout: fixed;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #a0a0a0;
+            }
+            th {
+                font-weight: bold;
+            }
+            td {
+                font-weight: normal;
+            }
+            .name {
+                width: 24%;
+                text-align: left;
+            }
+            .date {
+                width: 12%;
+                text-align: left;
+            }
+            .small {
+                width: 2%;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Patientenliste Rezeptabrechnung</h1>
+        <br />
+        <table>
+            <tr><th class="small">F</th><th class="small">T</th><th class="name">Name, Vorname</th><th class="date" id="d1"></th><th class="date" id="d2"></th><th class="date" id="d3"></th><th class="date" id="d4"></th><th class="date" id="d5"></th><th class="date" id="d6"></th></tr>
+            <!-- Data here -->
+        </table>
+        <script>
+            const date  = new Date();
+            var month   = date.getMonth();
+            var year    = date.getFullYear();
+            month += 1;
+            document.getElementById("d1").innerHTML = getNextMonth() + "." + year;
+            document.getElementById("d2").innerHTML = getNextMonth() + "." + year;
+            document.getElementById("d3").innerHTML = getNextMonth() + "." + year;
+            document.getElementById("d4").innerHTML = getNextMonth() + "." + year;
+            document.getElementById("d5").innerHTML = getNextMonth() + "." + year;
+            document.getElementById("d6").innerHTML = getNextMonth() + "." + year;
+
+            function getNextMonth() {
+                month += 1;
+                if (month >= 13) {
+                    year += 1;
+                    month = 1;
+                }
+                if (month < 10) {
+                    return "0" + month;
+                }
+                return month;
+            }
+        </script>
+    </body>
+</html>

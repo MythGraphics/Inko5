@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--    <meta name="viewport" content="width=595, height=842, initial-scale=1.0">                   --><!-- DIN A4 -->
+        <title>Deckblatt</title>
+        <style>
+            @page {
+                size:           portrait;
+                margin-top:     1cm;
+                margin-bottom:  1cm;
+                margin-left:    1cm;
+                margin-right:   1cm;
+				font-family:    Arial, Helvetica, sans-serif;
+            }
+            table {
+                border: 2px solid #ffffff;
+                border-collapse: separate;
+                border-spacing: 10px;
+                margin-left: 2%;
+                table-layout: fixed;
+                width: 98%;
+				font-family: Arial, Helvetica, sans-serif;
+            }
+            th {
+				border: 1px solid #ffffff;
+                text-align: left;
+                font-size: large;
+            }
+            td {
+				border: 1px solid #ffffff;
+                text-align: left;
+                font-size: small;
+            }
+            .large {
+                width: 70%
+            }
+            .medium {
+                width: 40%
+            }
+            .small {
+                width: 30%
+            }
+			.name {
+				font-size: x-large;
+				font-weight: bold;
+				width: 70%
+            }
+            .largebold {
+				/* wird vom InkoProgramm für Artikel verwendet */
+				font-size: large;
+				font-weight: bold;
+				width: 70%
+            }
+			.smallbold {
+				/* wird vom InkoProgramm für PZN verwendet */
+				font-size: large;
+                font-weight: bold;
+				width: 30%
+            }
+        </style>
+    </head>
+    <body>
+        <table><tr><th class="name"><u>⚕name⚕, ⚕vorname⚕</u></th><th class="small">⚕gdatum⚕</th></tr></table>
+        <hr />
+        <table><tr><td class="large">Name</td><td class="small">Geburtsdatum</td></tr></table>
+        <br />
+        <table><tr><th class="large">⚕straße⚕, ⚕plz⚕ ⚕ort⚕</th><th class="small">⚕tel⚕</th></tr></table>
+        <hr />
+        <table><tr><td class="large">Adresse</td><td class="small">Telefonnummer</td></tr></table>
+        <br />
+        <!-- Data here -->
+        <hr />
+        <table><tr><td class="large">Artikel</td><td class="small">PZN</td></tr></table>
+        <br />
+        <table><tr><th class="small">⚕gzeit⚕</th><th class="medium">⚕kk_name⚕</th><th class="small">⚕frei⚕</th></tr></table>
+        <hr />
+        <table><tr><td class="small">Genehmigungszeitraum</td><td class="medium">Krankenkasse</td><td class="small">Befreiungsstatus</td></tr></table>
+        <br />
+        <table><tr><th class="small">⚕erstbelieferung⚕</th><th class="medium">⚕actk⚕</th><th class="small">⚕bzeit⚕</th></tr></table>
+        <hr />
+        <table><tr><td class="small">Erstbelieferung</td><td class="medium">AC/TK</td><td class="small">Bindungszeitraum</td></tr></table>
+        <br />
+        <table><tr><td class="small">Besonderheiten:</td><td class="large">⚕besonderheiten⚕</td></tr></table>
+        <table><tr><td class="small">Kommentar:</td><td class="large"><b><u>⚕kommentar⚕</u></b></td></tr></table>
+    </body>
+</html>

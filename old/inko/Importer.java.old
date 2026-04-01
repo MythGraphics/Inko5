@@ -1,0 +1,67 @@
+package inko;
+
+/**
+ *
+ * @author Martin Pröhl alias MythGraphics
+ * @version 3.0.2
+ *
+ */
+
+import dataformat.xml.AttributedElement;
+import dataformat.xml.Parser;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+
+public class Importer {
+
+    private final static String HOST = "localhost";
+    private final static net.Login LOGIN = new net.Login("mythg", "");
+    private final static String OLD_DB_FILENAME = "db.xml";
+
+    private int size = 0;
+
+    public static void execute() {
+        try { Importer.main(null); }
+        catch (IOException e) { e.printStackTrace(); }
+    }
+
+    @Deprecated
+    public static void main(String[] args) throws IOException {
+        Importer importer = new Importer();
+//      PatientIO.firstRun();
+        PatientIO io = new PatientIO(HOST, PatientIO.DEFAULT_PORT, LOGIN);
+        io.connect();
+        io.setDatabase(PatientIO.DB_NAME);
+        ArrayList<Patient_old> old = importer.getPatienten( new File(OLD_DB_FILENAME));
+        for (int i = 0; i < old.size(); ++i) {
+            Patient p = Patient.getPatient( old.get(i) );
+            System.out.println( io.insert( p ));
+        }
+        io.close();
+    }
+
+    @Deprecated
+    public Importer() {}
+
+    @Deprecated
+    public ArrayList<Patient_old> getPatienten(File file) throws IOException {
+        BufferedReader in = new BufferedReader( new FileReader(file) );
+        ArrayList<Patient_old> list = new ArrayList<>();
+        while ( in.ready() ) {
+            AttributedElement ae = Parser.getAttributedElement( in.readLine() );
+            list.add( new Patient_old(ae) );
+            ++size;
+        }
+        in.close();
+        return list;
+    }
+
+    @Deprecated
+    public int getLength() {
+        return size;
+    }
+
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--    <meta name="viewport" content="width=595, height=842, initial-scale=1.0">                   --><!-- DIN A4 -->
+        <title>Lieferliste</title>
+        <style>
+            h1 {
+                font-size: x-large;
+            }
+            table {
+                border: 2px solid #808080;
+                border-collapse: separate;
+                border-spacing: 10px;
+                margin-left: 2%;
+                table-layout: fixed;
+                width: 98%;
+                page-break-after: always;
+            }
+            th, td {
+                border: 1px solid #a0a0a0;
+                text-align: left;
+            }
+            th {
+                font-weight: bold;
+                font-size: 0.9em;
+            }
+            td {
+                font-weight: normal;
+                font-size: smaller;
+            }
+            .nr {
+                width: 2%;
+            }
+            .frei {
+                width: 1%;
+            }
+            .name {
+                width: 15%;
+            }
+            .anschrift {
+                width: 15%;
+            }
+            .ort {
+                width: 12%;
+            }
+            .tel {
+                width: 14%;
+            }
+            .artikel {
+                width: 24%;
+            }
+			.kommentar {
+                width: 13%;
+            }
+            .preis {
+                width: 4%;
+            }
+            .klein {
+                font-size: xx-small;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Lieferliste Monat <script>
+			const date = new Date();
+			if ( date.getMonth() >= 12 ) {
+				date.setMonth(1);
+			} else {
+				date.setMonth( date.getMonth()+1 );
+			}
+			document.write( date.getMonth() );
+		</script></h1><!-- Liste für den nächsten Monat -->
+        <script>document.write( new Date().toLocaleDateString('de-DE') );</script>
+        | F = Zuzahlungsbefreit<br />
+        <br />
+        <!-- Data here -->
+        <script>window.print();</script>
+    </body>
+</html>

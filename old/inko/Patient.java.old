@@ -1,0 +1,832 @@
+package inko;
+
+/**
+ *
+ * @author  Martin Pröhl alias MythGraphics
+ * @version 5.1.3
+ *
+ */
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class Patient implements Comparable<Patient> {
+
+    public final static long EOT                = 32503676399230l;                                                      // EndOfTime --> 31.12.2999 23:59:59 CET
+    public final static String SEPARATOR        = ";";
+    public final static DateFormat DF           = new SimpleDateFormat("dd.MM.yyyy");
+    public final static DateFormat DF_SQL       = new SimpleDateFormat("yyyy-MM-dd");
+    public final static DateFormat DF_REDUCED   = new SimpleDateFormat("MM.yyyy");
+    public final static String[] PARAM_TEMPLATE = {
+        "⚕nr⚕", "⚕name⚕", "⚕vorname⚕", "⚕straße⚕", "⚕plz⚕", "⚕ort⚕", "⚕gdatum⚕", "⚕kk⚕", "⚕kvn⚕",
+        "⚕tel⚕", "⚕kommentar⚕", "⚕rxdatum⚕", "⚕erstbelieferung⚕", "⚕gzeit⚕", "⚕bzeit⚕",
+        "⚕liefern⚕", "⚕frei⚕", "⚕typ⚕",
+        "⚕hm_1⚕", "⚕hm_2⚕", "⚕hm⚕",
+        "⚕besonderheiten⚕", "⚕actk⚕", "⚕kk_name⚕", "⚕typ_str⚕"
+    };
+    public final static String[] PARAM_NAMES    = {
+        "ID", "Familienname", "Vorname", "Straße", "PLZ", "Wohnort", "Geburtsdatum", "IK Krankenkasse",
+        "KV-Nummer", "Telefon-Nummer", "Kommentar", "Rezeptdatum", "Erstbelieferung",
+        "Ende Genehmigungszeitraum", "Ende Bindungszeitraum", "liefern", "frei", "Typ"
+    };
+
+    private final static int PARAM_NAME_STRING_LENGTH   = 14;                                                           // von FAMILIENNAME bis ENDE_BINDUNG
+
+    public final static int VALUE_LENGTH                = 18;                                                           // bis einschl. index 17
+    public final static String PARAM_NAME_STRING        = init_PARAM_NAME_STRING();
+    public final static int[] ADG_PATTERN               = {1,2,3,4,5,6,7,8,9,16};
+
+    public final static int ID                          = 0;                                                            // nur für DB
+    public final static int FAMILIENNAME                = 1;
+    public final static int VORNAME                     = 2;
+    public final static int STRASSE                     = 3;
+    public final static int PLZ                         = 4;
+    public final static int ORT                         = 5;
+    public final static int GEBURTSDATUM                = 6;
+    public final static int KRANKENKASSE_IK             = 7;
+    public final static int KVNUMMER                    = 8;
+    public final static int TELENUMMER                  = 9;
+    public final static int KOMMENTAR                   = 10;
+    public final static int RXDATUM                     = 11;
+    public final static int ERSTBELIEFERUNG             = 12;
+    public final static int ENDE_GENEHMIGUNG            = 13;
+    public final static int ENDE_BINDUNG                = 14;
+
+    public final static int LIEFERN                     = 15;
+    public final static int FREI                        = 16;
+    public final static int TYPE                        = 17;
+
+    public final static int HIMI_MENGEN_LIST            = 18;
+    public final static int HIMI_ARTIKEL_LIST           = 19;
+    public final static int HIMI_LIST                   = 20;
+
+    public final static int BESONDERHEITEN              = 21;
+    public final static int ACTK                        = 22;
+    public final static int KRANKENKASSENNAME           = 23;
+    public final static int TYPE_STRING                 = 24;
+
+    public final static Calendar NICHTBEFREIT = new Calendar.Builder().setFields(
+        Calendar.YEAR, 1900,
+        Calendar.MONTH, Calendar.DECEMBER,
+        Calendar.DATE, 31
+    ).build();
+    public final static Date NICHTBEFREIT_DATE = NICHTBEFREIT.getTime();
+    public final static char TYPE_A = 'a';                                                                              // Typ: ableitend
+    public final static char TYPE_S = 's';                                                                              // Typ: saugend
+    public final static char TYPE_K = 'k';                                                                              // Typ: saugend, Kind
+
+    private final String[] value = new String[VALUE_LENGTH];
+    private final ArrayList<Himi> himilist = new ArrayList<>();
+    private final ArrayList<Integer> artikelList = new ArrayList<>();
+    private final ArrayList<Integer> mengenList = new ArrayList<>();
+    @Deprecated
+    private final ArrayList<String> himi_old = new ArrayList<>();
+
+    private String besonderheiten;
+    private boolean paused = false;
+
+    private static String init_PARAM_NAME_STRING() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < PARAM_NAME_STRING_LENGTH; ++i) {
+            builder.append(PARAM_NAMES[i+1]);                                                                           // "ID" auslassen
+            builder.append('\n');
+        }
+        return builder.toString();
+    }
+
+    public Patient() {}
+
+    public Patient(String[] values) {
+        for (int i = 0; ((i+1) < this.value.length) && (i < values.length); ++i) {                                      // "ID" überspringen; per PatientIO aus DB initialisiert
+            this.value[i+1] = values[i];
+        }
+        avoidEmptyValue();
+    }
+
+    public Patient(String[] value, int[] pattern) {
+        for (int i = 0, j = 0; (i < this.value.length) && (j < value.length); ++i) {
+            if (( j < pattern.length ) && ( i == pattern[j] )) {
+                this.value[i] = value[j];
+                ++j;
+            }
+        }
+        avoidEmptyValue();
+    }
+
+    public Patient(ArrayList<String> values) {
+        this( values.toArray( new String[0] ));
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+        if (paused) {
+            if ( !getRawValue(KOMMENTAR).startsWith( "pause_" )) {
+                setComment( "pause_" + getRawValue(KOMMENTAR) );
+            }
+        } else {
+            if ( getRawValue(KOMMENTAR).startsWith( "pause_" )) {
+                setComment( getRawValue(KOMMENTAR).substring( 6 ));
+            }
+        }
+    }
+
+    private void avoidEmptyValue() {
+        for (int i = 1; i < value.length; ++i) {
+            if (( value[i] == null ) || value[i].isEmpty() || value[i].equalsIgnoreCase( "NULL" )) {
+                switch (i) {
+                    case PLZ:
+                    case KRANKENKASSE_IK:
+                        value[i] = "0";
+                        continue;
+                    case GEBURTSDATUM:
+                    case RXDATUM:
+                    case ERSTBELIEFERUNG:
+                    case ENDE_GENEHMIGUNG:
+                    case ENDE_BINDUNG:
+                        // fehlendes Datum --> 01.01.1900
+                        value[i] = "01.01.1900";
+                        System.err.println("Eintrag \"" + PARAM_NAMES[i] + "\" leer! Verwende den 01.01.1900!");
+                        continue;
+                    case LIEFERN:
+                        value[i] = "false";
+                        continue;
+                    case FREI:
+                        value[i] = NICHTBEFREIT.toString();
+                        continue;
+                    case TYPE:
+                        value[i] = String.valueOf(TYPE_S);
+                }
+            }
+        }
+    }
+
+    public void setBesonderheiten(String s) {
+        besonderheiten = s;
+    }
+
+    public String getBesonderheiten() {
+        return besonderheiten;
+    }
+
+    public void setValue(int index, String value) {
+        if (value == null) { value = ""; }
+        if (index < VALUE_LENGTH) {
+            this.value[index] = value;
+            formatDateValue(index, DF);
+        }
+        switch (index) {
+            case KOMMENTAR:
+                setComment(value);
+                break;
+            case HIMI_ARTIKEL_LIST:
+                parseInteger2List(value, artikelList);
+                break;
+            case HIMI_MENGEN_LIST:
+                parseInteger2List(value, mengenList);
+                break;
+        }
+    }
+
+    private static void parseInteger2List(String s, ArrayList<Integer> list) {
+        StringTokenizer t = new StringTokenizer(s, ",", false);
+        while ( t.hasMoreTokens() ) {
+            list.add( Integer.valueOf( t.nextToken() ));
+        }
+    }
+
+    public Himi getHimi(int id) {
+        for ( Himi h : himilist ) {
+            if ( h.getId() == id ) {
+                return h;
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<Himi> getHimiList() {
+        return himilist;
+    }
+
+    /**
+     * Inititalisiert <code>himilist</code> aus <code>artikelList</code> und <code>mengenList</code>.
+     * @param allHimi Liste aller verfügbarer Himis
+     */
+    public void loadHimi(List<Himi> allHimi) {
+        Himi tmp;
+        for (int i = 0; i < allHimi.size(); ++i) {
+            for (int j = 0; j < artikelList.size(); ++j) {
+                if ( allHimi.get(i).getId() == artikelList.get( j )) {
+                    tmp = allHimi.get(i).clone();
+                    tmp.setMenge( mengenList.get( j ));
+                    himilist.add(tmp);
+                }
+            }
+        }
+    }
+
+    public String[] getTemplateValues() {
+        // entspricht PARAM_TEMPLATE
+        ArrayList<String> list = new ArrayList<>(PARAM_TEMPLATE.length);
+        for (int i = 0; i < value.length; ++i) {
+            list.add( getValue(i) );
+        }
+        list.add( getHimi_MengenList() );
+        list.add( getHimi_ArtikelList() );
+        list.add( getHimiListAsString() );
+        list.add( getBesonderheiten() );
+        list.add( getACTK() );
+        list.add( getKrankenkasseAsName() );
+        list.add( getTypeString() );
+        return list.toArray( new String[0] );
+    }
+
+    /**
+     * Formatiert den Datumswert.
+     * @param index Index des Wertes oder -1, um alle zu formatieren.
+     * @param df Formatvorlage
+     */
+    private void formatDateValue(int index, DateFormat df) {
+        if ( index < 0 ) {
+            for (int i = 6; i < value.length; ++i) {
+                formatDateValue(i, DF);
+            }
+            return;
+        }
+
+        if ( value[index] == null ) { return; }
+        switch (index) {
+            case 6:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 16:
+                value[index] = df.format( parseDate(index).getTime() );
+        }
+    }
+
+    /**
+     * Returns the raw value as string (for DB).
+     * @param index The parameter index.
+     * @return The raw value as string.
+     */
+    public String getRawValue(int index) {
+        if (index < VALUE_LENGTH) {
+            return value[index];
+        }
+        switch (index) {
+            case HIMI_ARTIKEL_LIST:
+            case HIMI_MENGEN_LIST:
+                return getValue(index);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the value of the given parameter.
+     * @param index The parameter index.
+     * @return String representation of the value in its most useful way.
+     */
+    public String getValue(int index) {
+        String raw = "", str;
+        if (index < VALUE_LENGTH) {
+            raw = value[index];
+        }
+        try {
+            switch (index) {
+                case KOMMENTAR:
+                    return getComment();
+                case ERSTBELIEFERUNG: case ENDE_GENEHMIGUNG: case ENDE_BINDUNG:
+                    return formatShortDate( DateUtil.getCalendar( value[index], true ).getTime() );
+                case TYPE_STRING:
+                    return getTypeString();
+                case TYPE:
+                    return Character.toString( getType() );
+                case FREI:
+                    if ( raw.equals( DF.format( NICHTBEFREIT.getTime() ))) {
+                        return "zuzahlungspflichtig";
+                    }
+                    return raw;
+                case BESONDERHEITEN:
+                    return getBesonderheiten();
+                case ACTK:
+                    return getACTK();
+                case KRANKENKASSENNAME:
+                    return getKrankenkasseAsName();
+                case HIMI_ARTIKEL_LIST:
+                    str = "";
+                    for ( Integer i : artikelList ) {
+                        str += i + ",";
+                    }
+                    return str;
+                case HIMI_MENGEN_LIST:
+                    str = "";
+                    for ( Integer i : mengenList ) {
+                        str += i + ",";
+                    }
+                    return str;
+                case HIMI_LIST:
+                    return getHimiListAsString();
+        }}
+        catch (NullPointerException e) {
+            System.err.println( "NULL in Patient, getValue(): " + e.toString() );
+            return null;
+        }
+        return raw;
+    }
+
+    public String getHimiListAsString() {
+        StringBuilder sb = new StringBuilder();
+        for ( Himi h : himilist ) {
+            sb.append( h.getFullArtikelString() );
+            sb.append(", ");
+        }
+        return sb.toString();
+    }
+
+    public void setHimi(Enumeration<Himi> himis) {
+        himilist.clear();
+        while ( himis.hasMoreElements() ) {
+            himilist.add( himis.nextElement() );
+        }
+        refreshHimiList();
+    }
+
+    public void addHimi(Himi himi) {
+        himilist.add(himi);
+        refreshHimiList();
+    }
+
+    public void removeHimi(Himi himi) {
+        himilist.remove(himi);
+        refreshHimiList();
+    }
+
+    /**
+     * Refreshes <code>artikelList</code> und <code>mengenList</code>.
+     */
+    void refreshHimiList() {
+        artikelList.clear();
+        mengenList.clear();
+        for ( Himi h : himilist ) {
+            artikelList.add( h.getId() );
+            mengenList.add( h.getMenge() );
+        }
+    }
+
+    public String getHimi_ArtikelList() {
+        return getValue(HIMI_ARTIKEL_LIST);
+    }
+
+    public String getHimi_MengenList() {
+        return getValue(HIMI_MENGEN_LIST);
+    }
+
+    /**
+     * Reads raw data stored in the object as ArrayList&lt;String&gt;
+     * @return the data as ArrayList&lt;String&gt;
+     */
+    public ArrayList<String> getRawData() {
+        ArrayList<String> list = new ArrayList<>();
+        for (String s : value) {
+            try {
+                list.add(s);
+            } catch (NullPointerException e) {
+                System.err.println( "NULL in Patient, getData(): " + e.toString() );
+                list.add("");
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Parst die Himis aus den alten Strings der GUI.
+     * @param namelist
+     * @param pznlist
+     */
+    @Deprecated
+    public void setOldHimi(String namelist, String pznlist) throws IllegalArgumentException {
+        StringTokenizer tname = new StringTokenizer(namelist, "\n", false);
+        StringTokenizer tpzn  = new StringTokenizer(pznlist, "\n", false);
+        if ( tname.countTokens() != tpzn.countTokens() ) {
+            throw new IllegalArgumentException(
+                "String \"namelist\" und \"pznlist\" ungleich in der Anzahl ihrer Zeilen."
+            );
+        }
+        while ( tname.hasMoreTokens() ) {
+            himi_old.add( tname.nextToken() + " (" + tpzn.nextToken() + ")" );
+        }
+    }
+
+    @Deprecated
+    public void addOldHimi(String name, int pzn) {
+        this.himi_old.add( name + " (" + pzn + ")" );
+    }
+
+    public ArrayList<String> getOldHimiAsList() {
+        return himi_old;
+    }
+
+    public char getType() {
+        return getRawValue(TYPE).charAt(0);
+    }
+
+    public void setType(char type) {
+        setValue( TYPE, String.valueOf( type ));
+    }
+
+    public String getTypeString() {
+        switch ( getType() ) {
+            case TYPE_A:
+                return "ableitend";
+            case TYPE_K:
+                return "saugend (Kind)";
+            case TYPE_S:
+                return "saugend";
+        }
+        return "";
+    }
+
+    public String getACTK() {
+        try {
+            String s = "AC/TK ";
+            switch ( getType() ) {
+                case TYPE_A:
+                    return s + HealthInsurer.ACTK_A[ HealthInsurer.getIndex( getKrankenkasseAsIK() )];
+                case TYPE_S:
+                    return s + HealthInsurer.ACTK_S[ HealthInsurer.getIndex( getKrankenkasseAsIK() )];
+                case TYPE_K:
+                    return s + HealthInsurer.ACTK_KS[ HealthInsurer.getIndex( getKrankenkasseAsIK() )];
+                default:
+                    return "";
+            }
+        } catch (ArrayIndexOutOfBoundsException e) { return ""; }
+    }
+
+    public int getID() {
+        return Integer.parseInt( getValue( ID ));
+    }
+
+    public void setID(int id) {
+        setValue( ID, String.valueOf(id) );
+    }
+
+    public String getLastName() {
+        return getValue(FAMILIENNAME);
+    }
+
+    public void setLastName(String name) {
+        setValue( FAMILIENNAME, name );
+    }
+
+    public String getFirstName() {
+        return getValue(VORNAME);
+    }
+
+    public void setFirstName(String name) {
+        setValue( VORNAME, name );
+    }
+
+    public String getStreet() {
+        return getValue(STRASSE);
+    }
+
+    public void setStreet(String value) {
+        setValue( STRASSE, value );
+    }
+
+    public int getPostCode() {
+        if (( value[PLZ] == null ) || value[PLZ].isEmpty() ) {
+            return 0;
+        }
+        return Integer.parseInt( value[PLZ] );
+    }
+
+    public void setPostCode(int value) {
+        setValue( PLZ, String.valueOf( value ));
+    }
+
+    public String getCityAsString() {
+        return getValue(ORT);
+    }
+
+    public void setCity(String name) {
+        setValue( ORT, name );
+    }
+
+    public Location getCityAsLocation() {
+        return new Location( getCityAsString() );
+    }
+
+    public String getBirthDate() {
+        return getValue(GEBURTSDATUM);
+    }
+
+    public void setBirthDate(Date date) {
+        setValue( GEBURTSDATUM, formatDate( date ));
+    }
+
+    public String getKVNumber() {
+        return getValue(KVNUMMER);
+    }
+
+    public void setKVNumber(String value) {
+        setValue( KVNUMMER, value );
+    }
+
+    private int getKrankenkasseAsIK() {
+        if (( value[KRANKENKASSE_IK] == null ) || value[KRANKENKASSE_IK].isEmpty() ) {
+            return 0;
+        }
+        return Integer.parseInt( value[KRANKENKASSE_IK] );
+    }
+
+    public String getKrankenkasseAsName() {
+        return String.valueOf( HealthInsurer.getByIK( getKrankenkasseAsIK() ));
+    }
+
+    public String getTeleNumber() {
+        return getValue(TELENUMMER);
+    }
+
+    public void setTeleNumber(String value) {
+        setValue( TELENUMMER, value );
+    }
+
+    public String getComment() {
+        // "pause_"-Präfix entfernen
+        String raw = getRawValue(KOMMENTAR);
+        if ( raw.startsWith( "pause_" )) {
+            raw = raw.substring(6);
+        }
+        return raw;
+    }
+
+    public void setComment(String comment) {
+        value[KOMMENTAR] = comment;
+        if ( comment != null && !comment.isEmpty() ) {
+            paused = comment.startsWith( "pause_" );
+        } else {
+            paused = false;
+        }
+    }
+
+    public Calendar getRxDate() {
+        return parseDate(RXDATUM);
+    }
+
+    public static Date getDate(String date) {
+        return DateUtil.getCalendar( date ).getTime();
+    }
+
+    public static Date getDate(Calendar date) {
+        return date.getTime();
+    }
+
+    public void setRxDate(Date date) {
+        setValue( RXDATUM, formatDate( date ));
+    }
+
+    public String getRxDateAsString() {
+        return getValue(RXDATUM);
+    }
+
+    public Date getFirstSupply() {
+        return DateUtil.getCalendar( value[ERSTBELIEFERUNG] ).getTime();
+    }
+
+    public void setFirstSupply(Date date) {
+        setValue( ERSTBELIEFERUNG, formatDate( date ));
+    }
+
+    public String getFirstSupplyAsString() {
+        return formatShortDate( getFirstSupply() );
+    }
+
+    public String getRxExpiringDateAsString() {
+        return formatShortDate( getRxExpiringDate().getTime() );
+    }
+
+    public void setRxExpiringDate(Date date) {
+        setValue( ENDE_GENEHMIGUNG, formatDate( date ));
+    }
+
+    public Calendar getRxExpiringDate() {
+        return parseDate(ENDE_GENEHMIGUNG);
+    }
+
+    public boolean isRxExpiringExpected() {
+        GregorianCalendar cal = new GregorianCalendar();
+        cal.set( Calendar.DAY_OF_MONTH, 1);                                                                             // setze den Tag auf den 1. des Monats
+        cal.add( Calendar.MONTH, 1 );                                                                                   // nächster Monat
+        return getRxExpiringDate().before(cal);
+    }
+
+    public boolean isBindingExpiringExpected() {
+        GregorianCalendar cal = new GregorianCalendar();
+        cal.add( Calendar.MONTH, 1 );                                                                                   // nächsten Monat
+        cal.set( Calendar.DAY_OF_MONTH, cal.getActualMaximum( Calendar.DAY_OF_MONTH ));                                 // setze den Tag auf den Letzten des Monats
+        return getBindingExpiringDate().before(cal);
+    }
+
+    public boolean isBindingExpired() {
+//      Date now = new GregorianCalendar().getTime();
+        GregorianCalendar now = new GregorianCalendar();
+        return getBindingExpiringDate().before(now);
+    }
+
+    public Calendar getBindingExpiringDate() {
+        return parseDate(ENDE_BINDUNG);
+    }
+
+    public String getBindingExpiringDateAsString() {
+        return formatShortDate( getBindingExpiringDate().getTime() );
+    }
+
+    public Calendar parseDate(int index) {
+        try {
+            return DateUtil.getCalendar( value[index], true );                                                          // fehlt der Wert "Tag", wird der letzte Tag des Monats gesetzt
+        }
+        catch (IllegalArgumentException | NoSuchElementException e) {
+            System.err.println( value[index] + " ungültig.");
+            System.err.println( "Datum unverständlich - Format unbekannt." );
+            System.err.println( e.getMessage() );
+            return null;
+        }
+    }
+
+    public boolean toDeliver() {
+        return SQLUtil.parseAnyBoolean( value[LIEFERN] );
+    }
+
+    public void setDeliver(boolean value) {
+        setValue( LIEFERN, String.valueOf( value ));
+    }
+
+    public boolean hasNoCoPayment() {
+        GregorianCalendar today = new GregorianCalendar();
+        GregorianCalendar x = new GregorianCalendar(
+            getCoPaymentExpiringDate().get(Calendar.YEAR),
+            Calendar.DECEMBER, 31
+        );
+        return today.before(x);
+    }
+
+    public void setNoCoPaymentDate(Date value) {
+        setValue( FREI, formatDate( value ));
+    }
+
+    public Calendar getCoPaymentExpiringDate() {
+        try {
+            return parseDate(FREI);
+        }
+        catch (IllegalArgumentException e) {
+            return NICHTBEFREIT;
+        }
+    }
+
+    /**
+     * Collects all primary values as a string-object; every value in a new line.
+     * Used for UI (JTextArea)
+     * Starts with index 1.
+     * @return all values as a single string
+     */
+    public String getDataAsString() {
+        String s = "";
+        for (int i = 1; i <= PARAM_NAME_STRING_LENGTH; ++i) {
+            try {
+                s += getValue(i);
+            } catch (NullPointerException e) {
+                System.err.println( "NULL in Patient, getDataAsString(): " + e.toString() );
+                s += "NULL";
+            }
+            s += "\n";
+        }
+        return s;
+    }
+
+    public static String formatShortDate(Date d) {
+        return DF_REDUCED.format(d);
+    }
+
+    public static String formatDate(Date d) {
+        return DF.format(d);
+    }
+
+    public static String formatSQLDate(Date d) {
+        return DF_SQL.format(d);
+    }
+
+    public static String formatDate(String dateString) {
+        return formatDate( DateUtil.getCalendar( dateString, true ).getTime() );                                        // fehlt der Wert "Tag", wird der letzte Tag des Monats gesetzt
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if ( obj == null || getClass() != obj.getClass() ) {
+            return false;
+        }
+        Patient pat = (Patient) obj;
+        boolean b1 = getCompareString().equals( pat.getCompareString() );
+        boolean b2 = getBirthDate().equals( pat.getBirthDate() );
+        return b1 && b2;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 97 * hash + Arrays.deepHashCode(this.value);
+        return hash;
+    }
+
+    public static boolean isEqual(String lastName, String firstName, String dateOfBirth, Patient ref) {
+        if ( !lastName.equals( ref.getLastName() )) { return false; }
+        if ( !firstName.equals( ref.getFirstName() )) { return false; }
+        if ( !dateOfBirth.equals( ref.getBirthDate() )) { return false; }
+        return true;
+    }
+
+    /**
+     * LastName, FirstName
+     * @return compare-string
+     */
+    public String getCompareString() {
+        return getLastName() + ", " + getFirstName();
+    }
+
+    @Override
+    public int compareTo(Patient ref) {
+        if (ref == null) {
+            return 1;
+        }
+        int length;
+        char[] a = getCompareString().toCharArray();
+        char[] b = ref.getCompareString().toCharArray();
+        if (a.length < b.length) {
+            length = a.length;
+        } else {
+            length = b.length;
+        }
+        for (int i = 0; i < length; ++i) {
+            if ( a[i] < b[i] ) {return -1;}
+            if ( a[i] > b[i] ) {return  1;}
+        }
+        if (a.length == b.length) {return  0;}
+        if (a.length >  b.length) {return  1;}
+        else                      {return -1;}
+    }
+
+    @Override
+    public String toString() {
+        return getCompareString();
+    }
+
+    /**
+     * Replaces all placeholder from PARAM_TEMPLATE to the values of Patient.
+     * The elements of the ArrayList will be change to the replaced ones.
+     * @param lines the Strings with the placeholders to be replaced
+     * @param p Patient containing the replacement data
+     */
+    public static void replaceTemplates(ArrayList<String> lines, Patient p) {
+        String[] template = Patient.PARAM_TEMPLATE;
+        for (int i = 0; i < lines.size(); ++i) {
+            for (int j = 0; j < template.length; ++j) {
+                if ( lines.get(i).contains( template[j] )) {
+                    lines.set( i, lines.get(i).replace( template[j], p.getValue(j) ));
+        }}}
+    }
+
+    /**
+     *
+     * @param source the source string
+     * @param index the index for FILE_PARAMS to be replaced
+     * @param replacement the replacing substring
+     * @return replaced string
+     */
+    public static String replace(String source, String replacement, int index) {
+        return source.replaceAll( PARAM_TEMPLATE[index], replacement );
+    }
+
+    /**
+     *
+     * @param source the source string
+     * @param replacement the array containing the replacing substrings
+     * @return replaced string
+     */
+    public static String replaceAll(String source, String[] replacement) {
+        String repl = source;
+        for (int i = 0; i < replacement.length; ++i) {
+            repl = repl.replaceAll( PARAM_TEMPLATE[i], replacement[i] );
+        }
+        return repl;
+    }
+
+}
