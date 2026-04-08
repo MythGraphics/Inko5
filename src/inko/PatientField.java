@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.1
+ * @version 1.0.2
  *
  */
 
@@ -57,7 +57,8 @@ public enum PatientField {
     // Performance-Optimierung: Statische Listen für Java 8
     public final static List<PatientField> DB_FIELDS;
     public final static List<PatientField> INSERT_FIELDS;
-    public final static List<PatientField> BASIC_FIELDS;
+    public final static List<PatientField> UI_FIELDS;
+    public final static List<PatientField> SHORT_DATE_FIELDS;
     public final static List<PatientField> ADG_FIELDS;
     public final static String UI_FIELD_STRING;
     public final static String INSERT_COLUMNS;
@@ -83,8 +84,14 @@ public enum PatientField {
                      .filter(f -> f != ID)
                      .collect( Collectors.toList() )
         );
+        // alle Felder der UI-Tabelle, die das verkürzte Datum (MM.JJJJ) anzeigen sollen
+        SHORT_DATE_FIELDS = Collections.unmodifiableList( Arrays.asList(
+            ENDE_GENEHMIGUNG,
+            ENDE_BINDUNG,
+            BEFREIUNGSDATUM
+        ));
         // alle DB-Felder der UI-Tabelle
-        BASIC_FIELDS = Collections.unmodifiableList( Arrays.asList(
+        UI_FIELDS = Collections.unmodifiableList( Arrays.asList(
             ID,
             FAMILIENNAME,
             VORNAME,

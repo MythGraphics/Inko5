@@ -302,6 +302,11 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="jUpButton" alignment="1" min="-2" max="-2" attributes="0"/>
+                      <Component id="jDownButton" alignment="1" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Component id="jAddArtikelButton" min="-2" pref="22" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
@@ -348,21 +353,27 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jArtikelComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jSpinner1" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jUpButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jCreateArtikelButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-                                  <Component id="jAddArtikelButton" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
-                                  <Component id="jRemoveArtikelButton" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
-                                  <Component id="jChangeArtikelButton" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
+                              <Group type="102" attributes="0">
+                                  <Component id="jCreateArtikelButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Group type="103" alignment="0" groupAlignment="1" attributes="0">
+                                          <Component id="jAddArtikelButton" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
+                                          <Component id="jRemoveArtikelButton" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
+                                          <Component id="jChangeArtikelButton" alignment="1" min="-2" pref="22" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="sRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="kRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="aRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
                               </Group>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="sRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="kRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="aRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="jDownButton" alignment="1" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <Component id="jScrollPane2" pref="0" max="32767" attributes="0"/>
@@ -505,6 +516,22 @@
             </Component>
           </SubComponents>
         </Container>
+        <Component class="javax.swing.JButton" name="jUpButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="&#x2303;"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jUpButtonActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="jDownButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="&#x2304;"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jDownButtonActionPerformed"/>
+          </Events>
+        </Component>
       </SubComponents>
     </Container>
     <Container class="javax.swing.JPanel" name="patientPanel">
@@ -573,7 +600,7 @@
                       </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="jScrollPane3" pref="180" max="32767" attributes="0"/>
+                  <Component id="jScrollPane3" pref="179" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>

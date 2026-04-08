@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 4.0.3
+ * @version 4.0.4
  *
  */
 
@@ -30,7 +30,7 @@ import javax.swing.text.JTextComponent;
 public class MainFrame extends JFrame {
 
     public final static String NAME         = "MythGraphics InkoProgramm";
-    public final static String VERSION      = "5.0.3";
+    public final static String VERSION      = "5.0.4";
     public final static DateFormat DF       = new SimpleDateFormat("dd.MM.yyyy");
 
     public static String SEVENZIP           = "C:\\Program Files\\7-Zip\\7z.exe";
@@ -111,6 +111,8 @@ public class MainFrame extends JFrame {
         jLabel3 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jPatientArtikelList = new javax.swing.JList<>();
+        jUpButton = new javax.swing.JButton();
+        jDownButton = new javax.swing.JButton();
         patientPanel = new javax.swing.JPanel();
         liefernCheckBox = new javax.swing.JCheckBox();
         freiCheckBox = new javax.swing.JCheckBox();
@@ -255,6 +257,20 @@ public class MainFrame extends JFrame {
         jPatientArtikelList.setCellRenderer(new inko.ArtikelListCellRenderer());
         jScrollPane2.setViewportView(jPatientArtikelList);
 
+        jUpButton.setText("⌃");
+        jUpButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jUpButtonActionPerformed(evt);
+            }
+        });
+
+        jDownButton.setText("⌄");
+        jDownButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jDownButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout artikelPanelLayout = new javax.swing.GroupLayout(artikelPanel);
         artikelPanel.setLayout(artikelPanelLayout);
         artikelPanelLayout.setHorizontalGroup(
@@ -266,6 +282,10 @@ public class MainFrame extends JFrame {
                         .addComponent(jLabel3)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jUpButton, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jDownButton, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(artikelPanelLayout.createSequentialGroup()
@@ -305,19 +325,23 @@ public class MainFrame extends JFrame {
                     .addGroup(artikelPanelLayout.createSequentialGroup()
                         .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jArtikelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jUpButton))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCreateArtikelButton)
-                        .addGap(7, 7, 7)
                         .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(jAddArtikelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jRemoveArtikelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jChangeArtikelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(sRadioButton)
-                                .addComponent(kRadioButton)
-                                .addComponent(aRadioButton))))
+                            .addGroup(artikelPanelLayout.createSequentialGroup()
+                                .addComponent(jCreateArtikelButton)
+                                .addGap(7, 7, 7)
+                                .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addComponent(jAddArtikelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jRemoveArtikelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jChangeArtikelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(sRadioButton)
+                                        .addComponent(kRadioButton)
+                                        .addComponent(aRadioButton))))
+                            .addComponent(jDownButton, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -463,7 +487,7 @@ public class MainFrame extends JFrame {
                         .addComponent(deleteButton)
                         .addComponent(newButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(patientPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
@@ -1418,6 +1442,20 @@ public class MainFrame extends JFrame {
         _jChangeArtikelButtonActionPerformed(evt);
     }//GEN-LAST:event_jChangeArtikelButtonActionPerformed
 
+    private void jDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jDownButtonActionPerformed
+        jPatientArtikelList.setSelectedIndex(
+            patientArtikelListModel.moveElementDown(
+                jPatientArtikelList.getSelectedIndex()
+        ));
+    }//GEN-LAST:event_jDownButtonActionPerformed
+
+    private void jUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jUpButtonActionPerformed
+        jPatientArtikelList.setSelectedIndex(
+            patientArtikelListModel.moveElementUp(
+                jPatientArtikelList.getSelectedIndex()
+        ));
+    }//GEN-LAST:event_jUpButtonActionPerformed
+
     private void selectPZN(String ref) {
         int refValue;
         try {
@@ -1559,7 +1597,7 @@ public class MainFrame extends JFrame {
             public TableCellEditor getCellEditor(int row, int column) {
                 if (column == 1) {
                     // PatientField für die aktuelle Zeile aus der Liste des Modells holen
-                    PatientField field = BASIC_FIELDS.get(row);
+                    PatientField field = UI_FIELDS.get(row);
                     // wähle den Editor basierend auf dem Feldtyp im Enum
                     if (field.getType() == LocalDate.class) {
                         return new LocalDateCellEditor();
@@ -1738,6 +1776,7 @@ public class MainFrame extends JFrame {
     private javax.swing.JButton jButtonNewRx;
     private javax.swing.JButton jChangeArtikelButton;
     protected javax.swing.JButton jCreateArtikelButton;
+    private javax.swing.JButton jDownButton;
     private javax.swing.JButton jFaelligButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
@@ -1785,6 +1824,7 @@ public class MainFrame extends JFrame {
     protected javax.swing.JSpinner jSpinner1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
+    private javax.swing.JButton jUpButton;
     private com.toedter.calendar.JYearChooser jYearChooser;
     private javax.swing.JRadioButton kRadioButton;
     private javax.swing.JButton lieferlisteButton;

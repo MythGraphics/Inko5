@@ -69,4 +69,32 @@ public class PatientArtikelListModel extends AbstractListModel<Artikel> implemen
         }
     }
 
+    public int moveElementUp(int index) {
+        if ( patient != null && index > 0 && index < patient.getArtikelList().size() ) {
+            // Element in der Liste tauschen
+            Artikel himi = patient.getArtikelList().remove(index);
+            patient.getArtikelList().add(index-1, himi);
+
+            patient.refreshArtikelList(); // aktualisieren
+            fireContentsChanged(this, index-1, index); // GUI benachrichtigen
+            return index-1;
+        } else {
+            return index;
+        }
+    }
+
+    public int moveElementDown(int index) {
+        if ( patient != null && index >= 0 && index < patient.getArtikelList().size() - 1 ) {
+            // Element in der Liste tauschen
+            Artikel himi = patient.getArtikelList().remove(index);
+            patient.getArtikelList().add(index+1, himi);
+
+            patient.refreshArtikelList(); // aktualisieren
+            fireContentsChanged(this, index, index+1); // GUI benachrichtigen
+            return index+1;
+        } else {
+            return index;
+        }
+    }
+
 }

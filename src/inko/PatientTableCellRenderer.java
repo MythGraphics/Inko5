@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.0
+ * @version 1.0.1
  *
  */
 
@@ -44,10 +44,16 @@ public class PatientTableCellRenderer extends DefaultTableCellRenderer {
         setBackground( table.getBackground() );
         setFont( getFont().deriveFont( Font.PLAIN ));
         setHorizontalAlignment(LEFT);
+        PatientField field = PatientField.UI_FIELDS.get(row);
 
         // Datums-Formatierung
         if (value instanceof LocalDate) {
-            setText(( (ChronoLocalDate) value ).format( Patient.DEFAULT_FORMATTER ));
+            // short-date Formatierung
+            if ( PatientField.SHORT_DATE_FIELDS.contains( field )) {
+                setText(( (ChronoLocalDate) value ).format( Patient.REDUCED_FORMATTER ));
+            } else {
+                setText(( (ChronoLocalDate) value ).format( Patient.DEFAULT_FORMATTER ));
+            }
         }
 /*
         else if (value instanceof Boolean) {
@@ -64,7 +70,6 @@ public class PatientTableCellRenderer extends DefaultTableCellRenderer {
             setForeground( table.getForeground() );
         }
         if (p != null) {
-            PatientField field = PatientField.BASIC_FIELDS.get(row);
             if (field == PatientField.ENDE_GENEHMIGUNG) {
                 if ( p.isPrescriptionExpired() ) {
                     setBackground(HELLROT);
