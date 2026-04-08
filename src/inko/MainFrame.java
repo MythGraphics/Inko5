@@ -23,6 +23,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.text.JTextComponent;
@@ -111,8 +112,8 @@ public class MainFrame extends JFrame {
         jLabel3 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jPatientArtikelList = new javax.swing.JList<>();
-        jUpButton = new javax.swing.JButton();
-        jDownButton = new javax.swing.JButton();
+        jUpButton = new BasicArrowButton(BasicArrowButton.NORTH);
+        jDownButton = new BasicArrowButton(BasicArrowButton.SOUTH);
         patientPanel = new javax.swing.JPanel();
         liefernCheckBox = new javax.swing.JCheckBox();
         freiCheckBox = new javax.swing.JCheckBox();
@@ -257,14 +258,12 @@ public class MainFrame extends JFrame {
         jPatientArtikelList.setCellRenderer(new inko.ArtikelListCellRenderer());
         jScrollPane2.setViewportView(jPatientArtikelList);
 
-        jUpButton.setText("⌃");
         jUpButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jUpButtonActionPerformed(evt);
             }
         });
 
-        jDownButton.setText("⌄");
         jDownButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jDownButtonActionPerformed(evt);
@@ -283,9 +282,9 @@ public class MainFrame extends JFrame {
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jUpButton, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jDownButton, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jUpButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jDownButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(artikelPanelLayout.createSequentialGroup()
@@ -303,13 +302,13 @@ public class MainFrame extends JFrame {
                     .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, artikelPanelLayout.createSequentialGroup()
                             .addComponent(jLabel4)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 306, Short.MAX_VALUE)
                             .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, artikelPanelLayout.createSequentialGroup()
                             .addComponent(jArtikelComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addComponent(jCreateArtikelButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jCreateArtikelButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         artikelPanelLayout.setVerticalGroup(
@@ -323,12 +322,13 @@ public class MainFrame extends JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(artikelPanelLayout.createSequentialGroup()
-                        .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jArtikelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jUpButton))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jArtikelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jUpButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(artikelPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(artikelPanelLayout.createSequentialGroup()
                                 .addComponent(jCreateArtikelButton)
                                 .addGap(7, 7, 7)
@@ -341,7 +341,7 @@ public class MainFrame extends JFrame {
                                         .addComponent(sRadioButton)
                                         .addComponent(kRadioButton)
                                         .addComponent(aRadioButton))))
-                            .addComponent(jDownButton, javax.swing.GroupLayout.Alignment.TRAILING)))
+                            .addComponent(jDownButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -487,7 +487,7 @@ public class MainFrame extends JFrame {
                         .addComponent(deleteButton)
                         .addComponent(newButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(patientPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
@@ -1776,7 +1776,7 @@ public class MainFrame extends JFrame {
     private javax.swing.JButton jButtonNewRx;
     private javax.swing.JButton jChangeArtikelButton;
     protected javax.swing.JButton jCreateArtikelButton;
-    private javax.swing.JButton jDownButton;
+    protected javax.swing.JButton jDownButton;
     private javax.swing.JButton jFaelligButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
@@ -1824,7 +1824,7 @@ public class MainFrame extends JFrame {
     protected javax.swing.JSpinner jSpinner1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
-    private javax.swing.JButton jUpButton;
+    protected javax.swing.JButton jUpButton;
     private com.toedter.calendar.JYearChooser jYearChooser;
     private javax.swing.JRadioButton kRadioButton;
     private javax.swing.JButton lieferlisteButton;

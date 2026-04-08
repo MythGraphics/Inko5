@@ -181,6 +181,8 @@ public class OldMainFrame extends inko.MainFrame {
 
         jSpinner1.setEnabled(false);
         jCreateArtikelButton.setEnabled(false);
+        jUpButton.setEnabled(false);
+        jDownButton.setEnabled(false);
 
         loadEntry( super.patientTableModel.getPatient() );
     }
