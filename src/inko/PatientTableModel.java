@@ -7,16 +7,11 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.0
+ * @version 1.0.1
  *
  */
 
-import java.time.LocalDate;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import static java.time.temporal.ChronoField.YEAR;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.swing.JOptionPane;
@@ -70,26 +65,7 @@ public class PatientTableModel extends AbstractTableModel implements HasPatient 
                 return;
             }
             try {
-                Object valueToSet = value;
-                // Logik für mm.yyyy Formatierung
-                if ( value instanceof String && field.getType() == LocalDate.class ) {
-                    String input = ((String) value).trim();
-                    // Prüfen, ob die Eingabe einem sinnigen Monat.Jahr Muster entspricht
-                    // Regex für: (1 oder 01) . (24 oder 2024)
-                    // ^(0?[1-9]|1[0-2])  -> Monat (1-12, optional mit 0)
-                    // \\.                -> Punkt
-                    // (\\d{2}|\\d{4})$   -> Entweder 2 oder 4 Ziffern am Ende
-                    if ( input.matches( "^(0?[1-9]|1[0-2])\\.(\\d{2}|\\d{4})$" ) &&
-                         PatientField.SHORT_DATE_FIELDS.contains( field )) {
-                            DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                                .appendPattern("M.")
-                                .appendValueReduced(YEAR, 2, 4, 2000)
-                                .toFormatter();
-                            YearMonth ym = YearMonth.parse(input, formatter);
-                            valueToSet = ym.atEndOfMonth(); // den letzten Tag des Monats berechnen
-                    }
-                }
-                patient.set(field, valueToSet);
+                patient.set(field, value);
                 super.fireTableCellUpdated(rowIndex, columnIndex);
             } catch (NumberFormatException | DateTimeParseException | NoSuchElementException e) {
                 JOptionPane.showMessageDialog( null, "Fehler: " + e.getMessage() );

@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 4.0.4
+ * @version 4.0.5
  *
  */
 
@@ -31,7 +31,7 @@ import javax.swing.text.JTextComponent;
 public class MainFrame extends JFrame {
 
     public final static String NAME         = "MythGraphics InkoProgramm";
-    public final static String VERSION      = "5.0.4";
+    public final static String VERSION      = "5.0.5";
     public final static DateFormat DF       = new SimpleDateFormat("dd.MM.yyyy");
 
     public static String SEVENZIP           = "C:\\Program Files\\7-Zip\\7z.exe";
