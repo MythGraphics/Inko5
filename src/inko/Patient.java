@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 6.1.0
+ * @version 6.1.1
  *
  */
 
@@ -665,6 +665,14 @@ public class Patient implements Comparable<Patient>, HasArtikel {
 
     public String getFormattedValue(PatientField field) {
         Object obj = get(field);
+        switch (field) {
+            case BEFREIUNGSDATUM:
+                if ( isCoPaymentFree() ) {
+                    return "frei bis " + ((ChronoLocalDate) obj).format(DEFAULT_FORMATTER);
+                } else {
+                    return "zuzahlungspflichtig";
+                }
+        }
         if (obj instanceof LocalDate) {
             return ((ChronoLocalDate) obj).format(DEFAULT_FORMATTER);
         }

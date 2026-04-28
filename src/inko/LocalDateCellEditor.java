@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.1.0
+ * @version 1.1.2
  *
  */
 
@@ -20,7 +20,6 @@ import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import static java.time.temporal.ChronoField.YEAR;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -57,6 +56,10 @@ public class LocalDateCellEditor extends DefaultCellEditor {
                         return parseGermanShortDate(text);
                 }
             }
+            // deutsche Formate ohne Punkt (ddMMyyyy)
+            if ( text.matches( "^(\\d{8})$" )) {
+                return LocalDate.parse( text, DateTimeFormatter.ofPattern( "ddMMyyyy" ));
+            }
             // deutsche Formate ohne Punkt (MMyyyy, MMyy)
             if ( text.matches( "^(\\d{4}|\\d{6})$" )) {
                 return parseGermanShortDate( text.substring( 0, 2 ) + "." + text.substring( 2 ));
@@ -81,10 +84,14 @@ public class LocalDateCellEditor extends DefaultCellEditor {
     }
 
     private static LocalDate parseGermanShortDate(String text) {
-        // MM.yyyy, M.yyyy, MM.yy
+        // MM.yyyy, M.yyyy, MM.yy, M.yy
+        if ( text.length() == 3 ) {
+            text = "0" + text;
+        }
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-            .appendPattern("M.")
-            .appendValueReduced(YEAR, 2, 4, 2000)
+            .appendPattern("[MM.yyyy]")
+            .appendPattern("[M.yyyy]")
+            .appendPattern("[MM.yy]")
             .toFormatter();
         return YearMonth.parse(text, formatter).atEndOfMonth(); // den letzten Tag des Monats berechnen
     }

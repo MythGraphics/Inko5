@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 3.1.0
+ * @version 3.1.1
  *
  */
 
@@ -246,18 +246,19 @@ public class HTMLMaker {
                 );
                 // in HTML formatieren
                 boolean flag = true;
-                String frei = "";
-                String artikelList;
+                String frei, artikelList;
                 Patient p;
                 for ( int i = 0; i < list.size(); ++i ) {
                     artikelList = list.get(i).getArtikelListAsString();
                     p = list.get(i);
                     if ( p.isCoPaymentFree() ) {
                         frei = "X";
+                    } else {
+                        frei = "";
                     }
                     String[] content = {
                         String.valueOf(i+1), // Zeilen-Nummerierung
-                        frei, // Status der Zuzahlungsbefreiung
+                        frei,
                         p.getFullName(),
                         p.getStreet(),
                         p.getCity(),
