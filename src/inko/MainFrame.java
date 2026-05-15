@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 4.0.6
+ * @version 4.0.7
  *
  */
 
@@ -11,6 +11,7 @@ import static inko.InkoType.*;
 import static inko.PatientField.*;
 import java.awt.Component;
 import java.awt.EventQueue;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import javax.swing.text.JTextComponent;
 public class MainFrame extends JFrame {
 
     public final static String NAME         = "MythGraphics InkoProgramm";
-    public final static String VERSION      = "5.0.6";
+    public final static String VERSION      = "5.0.7";
     public final static DateFormat DF       = new SimpleDateFormat("dd.MM.yyyy");
 
     public static String SEVENZIP           = "C:\\Program Files\\7-Zip\\7z.exe";
@@ -1646,6 +1647,14 @@ public class MainFrame extends JFrame {
         radioGroup1.add(kRadioButton);
 
         new File(outpath).mkdir();
+
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener( "permanentFocusOwner", e -> {
+            Object newValue = e.getNewValue();
+            if (newValue instanceof JTextField) {
+                JTextField textField = (JTextField) newValue;
+                SwingUtilities.invokeLater(textField::selectAll); // selectAll() ans Ende der Event-Queue schieben
+            }
+        });
     }
 
     List<Patient> getPatients() {
