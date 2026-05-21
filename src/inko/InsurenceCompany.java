@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 2.0.0
+ * @version 2.1.0
  *
  */
 
@@ -15,25 +15,27 @@ package inko;
 
 public enum InsurenceCompany {
 
-    UNKNOWN(        0, "Unbekannt",          000000000),
-    AOK(            1, "AOK Sachsen-Anhalt", 101097008),
-    IKK_GESUND_PLUS(2, "IKK gesund plus",    101202961),
-    BARMER(         3, "Barmer",             100980006);
+    UNKNOWN         ("Unbekannt",           000000000),
+    AOK_SA          ("AOK Sachsen-Anhalt",  101097008),
+    IKK_GESUND_PLUS ("IKK gesund plus",     101202961),
+    BARMER          ("Barmer",              100980006);
+
+    public final static String NO_DATA = "keine Daten";
 
     public final static String[] INFO_ABLEITEND = {
-        "",
+        NO_DATA,
         "kein Vertrag - Lieferausschluss!",
         "kein Vertrag - Lieferausschluss!",
         "Verordnung für max. 3 Monate; max. 8 St./Monat\nVWKZ 00 Erstversorgung, 04 Folgeversorgung"
     };
     public final static String[] INFO_SAUGEND = {
-        "",
+        NO_DATA,
         "Dauerverordnung: max. 24 Monate,\nHiMi-Nr. Pauschale: 1500001000\nPreis: 23,30€",
         "Dauerverordnung: max. 12 Monate,\nHiMi-Nr. Pauschale: 1599993008\nPreis: 23,30€",
         "kein Vertrag - Lieferausschluss!"
     };
     public final static String[] INFO_SAUGEND_KIND = {
-        "",
+        NO_DATA,
         "4-12 Jahre,\nDauerverordnung: max. 24 Monate,\nHiMi-Nr. Pauschale: 1500001005\nPreis: 35,00€",
         "4-12 Jahre,\nDauerverordnung: max. 12 Monate,\nHiMi-Nr. Pauschale: 1599993010\nPreis: 35,00€",
         "kein Vertrag - Lieferausschluss!"
@@ -52,18 +54,16 @@ public enum InsurenceCompany {
     };
     public final static String[] ACTK_SAUGEND_KIND = ACTK_SAUGEND;
 
-    final int id;
     final String name;
     final int ik;
 
-    InsurenceCompany(int id, String name, int ik) {
-        this.id = id;
+    InsurenceCompany(String name, int ik) {
         this.name = name;
         this.ik = ik;
     }
 
-    public int getId() {
-        return id;
+    public int getIndex() {
+        return ordinal();
     }
 
     public String getName() {
@@ -79,15 +79,6 @@ public enum InsurenceCompany {
         return name;
     }
 
-    public static InsurenceCompany fromId(int id) {
-        for ( InsurenceCompany ic : values() ) {
-            if (ic.id == id) {
-                return ic;
-            }
-        }
-        return UNKNOWN;
-    }
-
     /**
      * Gibt die Krankenkasse anhand des gegebenen IK zurück.
      *
@@ -95,12 +86,12 @@ public enum InsurenceCompany {
      * @return  Krankenkasse
      */
     public final static InsurenceCompany getByIK(int ik) {
-        for ( InsurenceCompany ic : InsurenceCompany.values() ) {
+        for ( InsurenceCompany ic : values() ) {
             if ( ik == ic.getIk() ) {
                 return ic;
             }
         }
-        return null;
+        return UNKNOWN;
     }
 
     /**
@@ -111,14 +102,14 @@ public enum InsurenceCompany {
      */
     public final static InsurenceCompany getByName(String name) {
         if ( name == null || name.isEmpty() ) {
-            return null;
+            return UNKNOWN;
         }
-        for ( InsurenceCompany ic : InsurenceCompany.values() ) {
+        for ( InsurenceCompany ic : values() ) {
             if ( name.equalsIgnoreCase( ic.getName() )) {
                 return ic;
             }
         }
-        return null;
+        return UNKNOWN;
     }
 
 }

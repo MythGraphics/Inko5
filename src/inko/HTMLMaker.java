@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 3.1.1
+ * @version 3.1.2
  *
  */
 
@@ -77,7 +77,7 @@ public class HTMLMaker {
 
     public void makeDeckblatt(Patient p) throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader in = io.Reader.getTextReader( template )) {
+        try ( BufferedReader in = io.Reader.getTextReader( template )) {
             while ( in.ready() ) {
                 String line = in.readLine();
                 if ( !line.contains( MARKER )) {
@@ -100,7 +100,7 @@ public class HTMLMaker {
 
     public void makeErweiterteArtikelliste(List<? extends Patient> pats) throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader in = io.Reader.getTextReader( template )) {
+        try ( BufferedReader in = io.Reader.getTextReader( template )) {
             while ( in.ready() ) {
                 String line = in.readLine();
                 if ( !line.contains( MARKER )) {
@@ -129,7 +129,7 @@ public class HTMLMaker {
         HashMap<Integer, Integer> mergeMap = new HashMap<>(); // Artikel.ID -> Artikel-Menge pro Patient
         HashMap<Integer, String> stringMap = new HashMap<>(); // Artikel.ID -> Artikel.NAME
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader in = io.Reader.getTextReader( template )) {
+        try ( BufferedReader in = io.Reader.getTextReader( template )) {
             while ( in.ready() ) {
                 String line = in.readLine();
                 if ( !line.contains( MARKER )) {
@@ -168,7 +168,7 @@ public class HTMLMaker {
 
     public void makeFaelligkeitsliste(List<Patient> pats, int listType) throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader in = io.Reader.getTextReader( template )) {
+        try ( BufferedReader in = io.Reader.getTextReader( template )) {
             while ( in.ready() ) {
                 String line = in.readLine();
                 if ( !line.contains( MARKER )) {
@@ -220,7 +220,7 @@ public class HTMLMaker {
 
     public void makeLieferliste(List<? extends Patient> pats) throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader in = io.Reader.getTextReader( template )) {
+        try ( BufferedReader in = io.Reader.getTextReader( template )) {
             while ( in.ready() ) {
                 String line = in.readLine();
                 if ( !line.contains( MARKER )) {
@@ -295,7 +295,7 @@ public class HTMLMaker {
 
     public void makePatientenliste(List<Patient> pats) throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader in = io.Reader.getTextReader( template )) {
+        try ( BufferedReader in = io.Reader.getTextReader( template )) {
             while ( in.ready() ) {
                 String line = in.readLine();
                 if ( !line.contains( MARKER )) {

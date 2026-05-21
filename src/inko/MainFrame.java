@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 4.0.7
+ * @version 4.0.8
  *
  */
 
@@ -32,7 +32,7 @@ import javax.swing.text.JTextComponent;
 public class MainFrame extends JFrame {
 
     public final static String NAME         = "MythGraphics InkoProgramm";
-    public final static String VERSION      = "5.0.7";
+    public final static String VERSION      = "5.0.8";
     public final static DateFormat DF       = new SimpleDateFormat("dd.MM.yyyy");
 
     public static String SEVENZIP           = "C:\\Program Files\\7-Zip\\7z.exe";
@@ -986,7 +986,6 @@ public class MainFrame extends JFrame {
         insurenceTextField.setText( patient.getHealthInsurer() );
         setTypeUI();
         typeChangeActionPerformed();
-        patient.setBesonderheiten(insurenceInfo);
 
         refreshArtikelComboBox();
         jTable1.requestFocus();
@@ -1490,21 +1489,18 @@ public class MainFrame extends JFrame {
     }
 
     private void typeChangeActionPerformed() {
-        InsurenceCompany ic = InsurenceCompany.getByName( insurenceTextField.getText() );
-        try {
-            if ( aRadioButton.isSelected() ) {
-                insurenceInfo = InsurenceCompany.INFO_ABLEITEND[ic.id];
-            }
-            else if ( sRadioButton.isSelected() ) {
-                insurenceInfo = InsurenceCompany.INFO_SAUGEND[ic.id];
-            }
-            else if ( kRadioButton.isSelected() ) {
-                insurenceInfo = InsurenceCompany.INFO_SAUGEND_KIND[ic.id];
-            }
-        } catch (IndexOutOfBoundsException e) {
-            insurenceTextField.setText("keine bekannte Krankenkasse");
-            insurenceInfo = "";
+        Patient p = patientTableModel.getPatient();
+        if ( aRadioButton.isSelected() ) {
+            p.setType(ABLEITEND);
         }
+        else if ( sRadioButton.isSelected() ) {
+            p.setType(SAUGEND);
+        }
+        else if ( kRadioButton.isSelected() ) {
+            p.setType(SAUGEND_KIND);
+        }
+        insurenceTextField.setText( p.getHealthInsurer() );
+        insurenceInfo = p.getBesonderheiten();
     }
 
     public void processTemplate(String template) {

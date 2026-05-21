@@ -7,11 +7,12 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 6.1.1
+ * @version 6.1.2
  *
  */
 
 import static inko.InkoType.*;
+import static inko.InsurenceCompany.*;
 import static inko.PatientField.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,16 +30,16 @@ import java.util.stream.Collectors;
 public class Patient implements Comparable<Patient>, HasArtikel {
 
     // Formatter für die verschiedenen Anwendungsfälle
-    public static final DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    public static final DateTimeFormatter REDUCED_FORMATTER = DateTimeFormatter.ofPattern("MM.yyyy");
-    public static final DateTimeFormatter SQL_FORMATTER     = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    public final static DateTimeFormatter DEFAULT_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    public final static DateTimeFormatter REDUCED_FORMATTER = DateTimeFormatter.ofPattern("MM.yyyy");
+    public final static DateTimeFormatter SQL_FORMATTER     = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    public static final LocalDate EOT = LocalDate.of(2999, 12, 31);
-    public static final LocalDate DEFAULT_DATE = LocalDate.of(1900, 1, 1);
+    public final static LocalDate EOT = LocalDate.of(2999, 12, 31);
+    public final static LocalDate DEFAULT_DATE = LocalDate.of(1900, 1, 1);
 
     public final static String ARTIKEL_SEPARATOR = ", ";
 
-    // Einmalig als statische Konstante definieren (sucht alles zwischen zwei ⚕)
+    // sucht alles zwischen zwei ⚕
     private final static Pattern TEMPLATE_PATTERN = Pattern.compile("⚕([^⚕]+)⚕");
 
     private int id                                  = -1;
@@ -57,8 +58,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     private LocalDate prescriptionExpiringDate      = DEFAULT_DATE;
     private LocalDate bindingExpiringDate           = DEFAULT_DATE;
     private LocalDate coPaymentFreeUntil            = DEFAULT_DATE;
-    private InkoType type                           = InkoType.SAUGEND;
-    private String besonderheiten                   = "";
+    private InkoType type                           = SAUGEND;
     private final ArrayList<Artikel> artikelList    = new ArrayList<>();
     private ArrayList<Integer> artikelIdList        = new ArrayList<>();
     private ArrayList<Integer> mengenList           = new ArrayList<>();
@@ -195,7 +195,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     }
 
     public String getHealthInsurer() {
-        return String.valueOf( InsurenceCompany.getByIK( healthInsurerIK ));
+        return InsurenceCompany.getByIK(healthInsurerIK).getName();
     }
 
     public int getHealthInsurerIK() {
@@ -211,34 +211,31 @@ public class Patient implements Comparable<Patient>, HasArtikel {
         setModified(true);
     }
 
-    public void setBesonderheiten(String str) {
-        this.besonderheiten = str;
-    }
-
     public String getBesonderheiten() {
-        return besonderheiten;
+        InsurenceCompany ic = InsurenceCompany.getByIK(healthInsurerIK);
+        switch (type) {
+            case ABLEITEND:
+                return INFO_ABLEITEND[ic.getIndex()];
+            case SAUGEND:
+                return INFO_SAUGEND[ic.getIndex()];
+            case SAUGEND_KIND:
+                return INFO_SAUGEND_KIND[ic.getIndex()];
+        }
+        return NO_DATA;
     }
 
     public String getACTK() {
-        try {
-            InsurenceCompany ic = InsurenceCompany.getByIK(healthInsurerIK);
-            if (ic == null) {
-                return "";
-            }
-            String s = "AC/TK ";
-            switch (type) {
-                case ABLEITEND:
-                    return s + InsurenceCompany.ACTK_ABLEITEND[ic.id];
-                case SAUGEND:
-                    return s + InsurenceCompany.ACTK_SAUGEND[ic.id];
-                case SAUGEND_KIND:
-                    return s + InsurenceCompany.ACTK_SAUGEND_KIND[ic.id];
-                default:
-                    return "";
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            return "";
+        InsurenceCompany ic = InsurenceCompany.getByIK(healthInsurerIK);
+        String s = "AC/TK ";
+        switch (type) {
+            case ABLEITEND:
+                return s + ACTK_ABLEITEND[ic.getIndex()];
+            case SAUGEND:
+                return s + ACTK_SAUGEND[ic.getIndex()];
+            case SAUGEND_KIND:
+                return s + ACTK_SAUGEND_KIND[ic.getIndex()];
         }
+        return NO_DATA;
     }
 
     /**
@@ -653,7 +650,6 @@ public class Patient implements Comparable<Patient>, HasArtikel {
             case TYP:               type                        = InkoType.fromCode( value.charAt( 0 ));    break;
             case ARTIKELMENGE:      setMengenList(value);                                                   break;
             case ARTIKELLISTE:      setArtikelIdList(value);                                                break;
-            case BESONDERHEITEN:    besonderheiten              = value;                                    break;
             default: throw new NoSuchElementException("Feld \"" + field + "\" unbekannt.");
         }
         setModified(true);
