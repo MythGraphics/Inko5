@@ -3,9 +3,11 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 2.1.0
+ * @version 3.0.0
  *
  */
+
+import static inko.InkoType.*;
 
 /*
  * A  - ableitend
@@ -40,6 +42,7 @@ public enum InsurenceCompany {
         "4-12 Jahre,\nDauerverordnung: max. 12 Monate,\nHiMi-Nr. Pauschale: 1599993010\nPreis: 35,00€",
         "kein Vertrag - Lieferausschluss!"
     };
+    public final static String ACTK = "AC/TK ";
     public final static String[] ACTK_ABLEITEND = {
         "",
         "1514327",
@@ -72,6 +75,30 @@ public enum InsurenceCompany {
 
     public int getIk() {
         return ik;
+    }
+
+    public String getACTK(InkoType type) {
+        switch (type) {
+            case ABLEITEND:
+                return ACTK + ACTK_ABLEITEND[ordinal()];
+            case SAUGEND:
+                return ACTK + ACTK_SAUGEND[ordinal()];
+            case SAUGEND_KIND:
+                return ACTK + ACTK_SAUGEND_KIND[ordinal()];
+        }
+        return NO_DATA;
+    }
+
+    public String getInfo(InkoType type) {
+        switch (type) {
+            case ABLEITEND:
+                return INFO_ABLEITEND[ordinal()];
+            case SAUGEND:
+                return INFO_SAUGEND[ordinal()];
+            case SAUGEND_KIND:
+                return INFO_SAUGEND_KIND[ordinal()];
+        }
+        return NO_DATA;
     }
 
     @Override

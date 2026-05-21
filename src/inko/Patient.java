@@ -212,30 +212,11 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     }
 
     public String getBesonderheiten() {
-        InsurenceCompany ic = InsurenceCompany.getByIK(healthInsurerIK);
-        switch (type) {
-            case ABLEITEND:
-                return INFO_ABLEITEND[ic.getIndex()];
-            case SAUGEND:
-                return INFO_SAUGEND[ic.getIndex()];
-            case SAUGEND_KIND:
-                return INFO_SAUGEND_KIND[ic.getIndex()];
-        }
-        return NO_DATA;
+        return InsurenceCompany.getByIK(healthInsurerIK).getInfo(type);
     }
 
     public String getACTK() {
-        InsurenceCompany ic = InsurenceCompany.getByIK(healthInsurerIK);
-        String s = "AC/TK ";
-        switch (type) {
-            case ABLEITEND:
-                return s + ACTK_ABLEITEND[ic.getIndex()];
-            case SAUGEND:
-                return s + ACTK_SAUGEND[ic.getIndex()];
-            case SAUGEND_KIND:
-                return s + ACTK_SAUGEND_KIND[ic.getIndex()];
-        }
-        return NO_DATA;
+        return InsurenceCompany.getByIK(healthInsurerIK).getACTK(type);
     }
 
     /**
