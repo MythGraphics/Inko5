@@ -684,9 +684,6 @@
           </AuxValues>
         </Component>
         <Component class="javax.swing.JComboBox" name="patientComboBox">
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="patientComboBoxActionPerformed"/>
-          </Events>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Patient&gt;"/>
           </AuxValues>

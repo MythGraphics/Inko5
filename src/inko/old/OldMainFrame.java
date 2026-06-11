@@ -7,7 +7,7 @@ package inko.old;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.0
+ * @version 1.0.1
  *
  */
 
@@ -31,7 +31,7 @@ public class OldMainFrame extends inko.MainFrame {
     private JTextField artikelTextField;
 
     public OldMainFrame() {
-        patientArtikelListModel = new PatientArtikelListModel( (inko.old.DBio) pio );
+        patientArtikelListModel = new PatientArtikelListModel(( inko.old.DBio ) pio );
         initComponents();
     }
 
@@ -48,6 +48,7 @@ public class OldMainFrame extends inko.MainFrame {
 
         patientArtikelListModel.setPatient( patient.getId() );
         loadEntryUpdateUI(patient);
+        patientTableModel.getPatient().setModified(false);
     }
 
     @Override

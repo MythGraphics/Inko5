@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 4.0.8
+ * @version 4.0.9
  *
  */
 
@@ -31,27 +31,27 @@ import javax.swing.text.JTextComponent;
 
 public class MainFrame extends JFrame {
 
-    public final static String NAME         = "MythGraphics InkoProgramm";
-    public final static String VERSION      = "5.0.8";
-    public final static DateFormat DF       = new SimpleDateFormat("dd.MM.yyyy");
+    public final static String NAME     = "MythGraphics InkoProgramm";
+    public final static String VERSION  = "5.0.9";
+    public final static DateFormat DF   = new SimpleDateFormat("dd.MM.yyyy");
 
-    public static String SEVENZIP           = "C:\\Program Files\\7-Zip\\7z.exe";
-    public static String OO                 = "P:\\OpenOffice 4\\program\\soffice.exe";
-//  public static String OO                 = "C:\\Program Files (x86)\\OpenOffice 4\\program\\soffice.exe";
-    public static String CSVFILESTR         = "C:\\TEMP\\REPORT.TXT"; // ADG trennt mit Tabulator!
+    public static String SEVENZIP       = "C:\\Program Files\\7-Zip\\7z.exe";
+    public static String OO             = "P:\\OpenOffice 4\\program\\soffice.exe";
+//  public static String OO             = "C:\\Program Files (x86)\\OpenOffice 4\\program\\soffice.exe";
+    public static String CSVFILESTR     = "C:\\TEMP\\REPORT.TXT"; // ADG trennt mit Tabulator!
 
     public final String outpath;
 
-    protected static String server          = "localhost";
-    protected static String user            = "mythg";
-    protected static String pass            = "";
+    protected static String server      = "localhost";
+    protected static String user        = "mythg";
+    protected static String pass        = "";
 
     protected DBio pio;
     protected PatientTableModel patientTableModel;
     protected PatientComboBoxModel patientComboBoxModel;
 
-    private final DefaultComboBoxModel<Artikel> artikelComboBoxModel  = new DefaultComboBoxModel<>();
-    private final PatientArtikelListModel patientArtikelListModel     = new PatientArtikelListModel();
+    private final DefaultComboBoxModel<Artikel> artikelComboBoxModel = new DefaultComboBoxModel<>();
+    private final PatientArtikelListModel patientArtikelListModel    = new PatientArtikelListModel();
 
     private OrteFrame orteFrame;
     private CompareFrame compareFrame;
@@ -379,12 +379,6 @@ public class MainFrame extends JFrame {
         statusField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         statusField.setFocusable(false);
         statusField.setRequestFocusEnabled(false);
-
-        patientComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                patientComboBoxActionPerformed(evt);
-            }
-        });
 
         jLabel7.setText("Patient:");
 
@@ -990,6 +984,8 @@ public class MainFrame extends JFrame {
         refreshArtikelComboBox();
         jTable1.requestFocus();
         jTable1.editCellAt(1, 1);
+
+        patient.setModified(false);
     }
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
@@ -1023,18 +1019,18 @@ public class MainFrame extends JFrame {
         }
     }
 
-    protected void saveEntry(Patient p) {
-        if (p == null) {
+    protected void saveEntry(Patient patient) {
+        if (patient == null) {
             statusField.showError("Kein Patient zum Speichern geladen.");
             return;
         }
-        else if ( !p.isModified() ) {
+        else if ( !patient.isModified() ) {
             statusField.showProblem("Keine Änderung an Patient erkannt. Speichern nicht erforderlich.");
             return;
         }
         try {
-            pio.savePatient(p);
-            statusField.showSuccess( "Patient " + p.getFullName() + " erfolgreich in Datenbank gespeichert." );
+            pio.savePatient(patient);
+            statusField.showSuccess( "Patient " + patient.getFullName() + " erfolgreich in Datenbank gespeichert." );
             patientComboBoxModel.updateSelectedDisplay(patientComboBox);
         } catch (Exception e) {
             statusField.showError( "Fehler beim Speichern: " + e.getMessage() );
@@ -1424,12 +1420,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void patientComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_patientComboBoxActionPerformed
-        // laden in die JTable erfolgt an anderer Stelle
-        // patient-Objektvariable über loadEntry initialisiert
-        jPatientArtikelListMouseClicked(null);
-    }//GEN-LAST:event_patientComboBoxActionPerformed
-
     private void jAddArtikelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jAddArtikelButtonActionPerformed
         _jAddArtikelButtonActionPerformed(evt);
     }//GEN-LAST:event_jAddArtikelButtonActionPerformed
@@ -1668,15 +1658,21 @@ public class MainFrame extends JFrame {
     private void initPatientComboBox() {
         patientComboBoxModel = getNewPatientComboBox(patientComboBox, pio, patientTableModel, patientArtikelListModel);
 
-        // add additional patientComboBox listener
+        // zusätzliche ActionListener für patientComboBox hinzufügen
         patientComboBox.addActionListener( e -> {
             if (isAdjusting) {
                 // Verhindert Endlosschleifen
                 return;
             }
 
-            Patient selected = (Patient) patientComboBox.getSelectedItem();
-            if (selected == null) {
+            Object item = patientComboBox.getSelectedItem();
+            Patient selected;
+            /* Wenn die ComboBox editierbar ist, gibt getSelectedItem() oft nur einen String
+             * (den getippten Text) zurück, statt des Patient-Objekts.
+             */
+            if (item instanceof Patient) {
+                selected = (Patient) item;
+            } else {
                 return;
             }
 
@@ -1699,6 +1695,7 @@ public class MainFrame extends JFrame {
                     return;
                 }
             }
+
             // neuen Patienten ins Formular laden
             loadEntry(selected);
         });
@@ -1711,10 +1708,28 @@ public class MainFrame extends JFrame {
         jComboBox.setModel(patientComboBoxModel);
         jComboBox.setRenderer( new PatientListCellRenderer() );
         jComboBox.setEditable(true);
-        // den Editor (das Textfeld) der ComboBox greifen
+        // den Editor (das Textfeld) der ComboBox holen
         JTextField editor = (JTextField) jComboBox.getEditor().getEditorComponent();
 
         // diverse Listener hinzufügen
+        jComboBox.addActionListener( e -> {
+            // wird von ENTER ausgelöst
+            if ( "comboBoxEdited".equals( e.getActionCommand() )) {
+                /* Wenn die ComboBox editierbar ist, gibt getSelectedItem() oft nur einen String
+                 * (den getippten Text) zurück, statt des Patient-Objekts. Um das zu beheben,
+                 * fügen wir eine Logik ein, die beim Drücken von Enter das richtige Objekt auswählt:
+                 */
+                Object selected = jComboBox.getSelectedItem();
+                if (selected instanceof Patient) {
+                    Patient p = (Patient) selected;
+                    for (HasPatient u : user) {
+                        u.setPatient(p);
+                    }
+                }
+                String text = editor.getText();
+                patientComboBoxModel.filter(text); // Model filtern
+            }
+        });
         editor.addMouseListener( new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
@@ -1724,39 +1739,7 @@ public class MainFrame extends JFrame {
                 }
             }
         });
-        editor.addKeyListener( new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                // Steuer-Tasten Pfeil oben/unten ignorieren
-                if ( e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_UP ) {
-                    return;
-                }
-                if ( e.getKeyCode() == KeyEvent.VK_ENTER ) {
-                    jComboBox.requestFocusInWindow();
-                }
 
-                String text = editor.getText();
-                // Model filtern
-                patientComboBoxModel.filter(text);
-                // ComboBox wieder aufklappen, um Treffer zu zeigen
-                jComboBox.setPopupVisible( patientComboBoxModel.getSize() > 0 );
-                // eingegebenen Text im Editor behalten (sonst wird er überschrieben)
-                editor.setText(text);
-            }
-        });
-        /* Wenn die ComboBox editierbar ist, gibt getSelectedItem() oft nur einen String
-         * (den getippten Text) zurück, statt des Patient-Objekts. Um das zu beheben,
-         * fügen wir eine Logik ein, die beim Drücken von Enter das richtige Objekt auswählt:
-         */
-        jComboBox.addActionListener( e -> {
-            Object selected = jComboBox.getSelectedItem();
-            if (selected instanceof Patient) {
-                Patient p = (Patient) selected;
-                for (HasPatient u : user) {
-                    u.setPatient(p);
-                }
-            }
-        });
         return patientComboBoxModel;
     }
 

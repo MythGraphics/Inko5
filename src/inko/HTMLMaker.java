@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 3.1.2
+ * @version 3.1.3
  *
  */
 
@@ -203,7 +203,7 @@ public class HTMLMaker {
                             if ( p.isPrescriptionExpiringSoon() ) {
                                 content = new String[] {
                                     p.getLastName()  + ", " + p.getFirstName(),
-                                    p.getPrescriptionExpiringDate().format(Patient.DEFAULT_FORMATTER)
+                                    p.getBindingExpiringDate().format(Patient.DEFAULT_FORMATTER)
                                 };
                             }
                             break;
