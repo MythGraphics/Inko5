@@ -21,8 +21,13 @@ public class PatientArtikelListModel extends AbstractListModel<Artikel> implemen
 
     @Override
     public void setPatient(Patient patient) {
+        if ( getSize() > 0 ) {
+            fireIntervalRemoved( this, 0, getSize()-1 );
+        }
         this.patient = patient;
-        fireContentsChanged( this, 0, getSize() );
+        if ( getSize() > 0 ) {
+            fireIntervalAdded(   this, 0, getSize()-1 );
+        }
     }
 
     @Override
@@ -44,29 +49,33 @@ public class PatientArtikelListModel extends AbstractListModel<Artikel> implemen
         }
     }
 
-    public void set(int index, Artikel himi) {
+    public Artikel set(int index, Artikel artikel) {
         if (patient != null) {
-            patient.getArtikelList().set(index, himi);
+            Artikel old = patient.getArtikelList().set(index, artikel);
             patient.refreshArtikelList();
-            fireContentsChanged(himi, index, index);
+            fireContentsChanged(artikel, index, index);
+            return old;
         }
+        return null;
     }
 
-    public void addElement(Artikel himi) {
+    public void addElement(Artikel artikel) {
         if (patient != null) {
-            patient.getArtikelList().add(himi);
+            patient.getArtikelList().add(artikel);
             patient.refreshArtikelList();
             int index = patient.getArtikelList().size()-1;
             fireIntervalAdded(this, index, index);
         }
     }
 
-    public void remove(int index) {
+    public Artikel remove(int index) {
         if ( patient != null && index >= 0 && index < patient.getArtikelList().size() ) {
-            patient.getArtikelList().remove(index);
+            Artikel old = patient.getArtikelList().remove(index);
             patient.refreshArtikelList();
             fireIntervalRemoved(this, index, index);
+            return old;
         }
+        return null;
     }
 
     public int moveElementUp(int index) {

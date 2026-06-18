@@ -25,8 +25,13 @@ public class PatientArtikelListModel extends AbstractListModel<Artikel> {
     }
 
     public void setPatient(int id) {
+        if ( getSize() > 0 ) {
+            fireIntervalRemoved( this, 0, getSize()-1 );
+        }
         this.patient = io.getOldPatientByID(id);
-        fireContentsChanged( this, 0, getSize() );
+        if ( getSize() > 0 ) {
+            fireIntervalAdded(   this, 0, getSize()-1 );
+        }
     }
 
     public Patient getPatient() {

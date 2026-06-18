@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.1
+ * @version 1.0.2
  *
  */
 
@@ -93,7 +93,7 @@ public class InfoFrame extends JFrame implements HasPatient {
             }
             return;
         }
-        patientComboBoxModel = MainFrame.getNewPatientComboBox(jComboBox1, pio, this);
+        patientComboBoxModel = MainFrame.getNewPatientComboBoxModel(jComboBox1, pio, this);
         jComboBox1.setSelectedIndex(0);
         pio.close();
     }

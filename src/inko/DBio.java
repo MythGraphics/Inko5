@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 2.1.1
+ * @version 2.1.3
  *
  */
 
@@ -166,7 +166,7 @@ public class DBio extends SQLConnection {
         himiCache.stream()
                  .filter( h -> h.getId() == artikel.getId() )
                  .findFirst()
-                 .ifPresent( h -> himiCache.set( himiCache.indexOf(h), artikel ));
+                 .ifPresent( h -> himiCache.set( himiCache.indexOf( h ), artikel ));
     }
 
     public boolean deleteHimi(int id) {
@@ -201,13 +201,14 @@ public class DBio extends SQLConnection {
             // Typsichere Konvertierung
             if (value instanceof Date) {
                 // Konvertierung: SQL Date -> LocalDate
-                p.set( field, ( (Date) value ).toLocalDate() );
+                p.set( field, (( Date ) value ).toLocalDate() );
             }
             else {
                 p.set(field, value);
             }
         }
         p.setId( rs.getInt( ID.getDBName() ));
+        p.buildArtikelList(himiCache);
         p.setModified(false);
         return p;
     }
@@ -246,7 +247,7 @@ public class DBio extends SQLConnection {
         if ( himiCache == null ) {
             himiCache = getArtikelList();
         }
-        p.initArtikelList(himiCache);
+        p.buildArtikelList(himiCache);
     }
 
     public void deleteArtikelCache() {

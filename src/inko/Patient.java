@@ -7,12 +7,11 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 6.1.2
+ * @version 6.1.3
  *
  */
 
-import static inko.InkoType.*;
-import static inko.InsurenceCompany.*;
+import static inko.InkoType.SAUGEND;
 import static inko.PatientField.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -59,9 +58,9 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     private LocalDate bindingExpiringDate           = DEFAULT_DATE;
     private LocalDate coPaymentFreeUntil            = DEFAULT_DATE;
     private InkoType type                           = SAUGEND;
-    private final ArrayList<Artikel> artikelList    = new ArrayList<>();
-    private ArrayList<Integer> artikelIdList        = new ArrayList<>();
-    private ArrayList<Integer> mengenList           = new ArrayList<>();
+    private List<Artikel> itemList                  = new ArrayList<>();
+    private List<Integer> itemIdList                = new ArrayList<>();
+    private List<Integer> mengenList                = new ArrayList<>();
     private boolean deliver                         = false;
     private boolean paused                          = false;
     private boolean modified                        = false; // NUR für DB-Einträge
@@ -233,7 +232,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
 
     public Artikel getArtikel(int id) {
         try {
-            return artikelList.get(id);
+            return getArtikelList().get(id);
         } catch (Exception e) {
             return null;
         }
@@ -241,41 +240,42 @@ public class Patient implements Comparable<Patient>, HasArtikel {
 
     @Override
     public List<Artikel> getArtikelList() {
-        return artikelList;
+        return itemList;
     }
 
     @Override
     public String getArtikelListAsString() {
-        return artikelList.stream()
-                          .map(Artikel::getFullArtikelString)
-                          .collect( Collectors.joining( ARTIKEL_SEPARATOR ));
+        return getArtikelList().stream()
+                               .map(Artikel::getFullArtikelString)
+                               .collect( Collectors.joining( ARTIKEL_SEPARATOR ));
     }
 
     /**
-     * Aktualisiert <code>artikelIdList</code>, <code>mengenList</code> und setzt <code>modified</code> auf TRUE.
+     * Aktualisiert <code>artikelIdList</code> & <code>mengenList</code> mittels <code>artiekList</code> und setzt
+     * <code>modified</code> auf TRUE.
      */
     public void refreshArtikelList() {
-        artikelIdList.clear();
+        itemIdList.clear();
         mengenList.clear();
         for ( Artikel a : getArtikelList() ) {
-            artikelIdList.add( a.getId() );
+            itemIdList.add( a.getId() );
             mengenList.add( a.getMenge() );
         }
         setModified(true);
     }
 
     /**
-     * Inititalisiert <code>artikelList</code> aus <code>artikelIdList</code> und <code>mengenList</code>.
-     * @param allArtikelList Liste aller verfügbaren Himis
+     * Erstellt die ArtikelListe aus <code>artikelIdList</code> und <code>mengenList</code>.
+     * @param allItemList Liste aller Artikel
      */
-    public void initArtikelList(List<Artikel> allArtikelList) {
+    public void buildArtikelList(List<Artikel> allItemList) {
         Artikel a;
-        for (int j = 0; j < artikelIdList.size(); ++j) {
-            for (int i = 0; i < allArtikelList.size(); ++i) {
-                if ( allArtikelList.get( i ).getId() == artikelIdList.get( j )) {
-                    a = allArtikelList.get(i).clone();
+        for (int j = 0; j < itemIdList.size(); ++j) {
+            for (int i = 0; i < allItemList.size(); ++i) {
+                if ( allItemList.get( i ).getId() == itemIdList.get( j )) {
+                    a = allItemList.get(i).clone();
                     a.setMenge( mengenList.get( j ));
-                    artikelList.add(a);
+                    itemList.add(a);
                 }
             }
         }
@@ -382,14 +382,14 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     }
 
     public String getRawArtikelList() {
-        return artikelIdList.stream()
-                          .map(String::valueOf)
-                          .collect( Collectors.joining( "," ))
+        return itemIdList.stream()
+                         .map(String::valueOf)
+                         .collect( Collectors.joining( "," ))
         ;
     }
 
     public void setArtikelIdList(String rawstr) {
-        artikelIdList = parseAsList(rawstr);
+        itemIdList = parseAsList(rawstr);
     }
 
     public void setMengenList(String rawstr) {
@@ -422,7 +422,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
             }
             // Datumskonvertierung (LocalDate -> java.sql.Date)
             else if (value instanceof LocalDate) {
-                pstmt.setDate( i, java.sql.Date.valueOf( (LocalDate) value ));
+                pstmt.setDate( i, java.sql.Date.valueOf(( LocalDate ) value ));
             }
             // Patiententyp (Enum -> char/String Code)
             else if (field == PatientField.TYP) {
@@ -517,6 +517,8 @@ public class Patient implements Comparable<Patient>, HasArtikel {
         if ( typeCode != null && !typeCode.isEmpty() ) {
             p.setType( InkoType.fromCode( typeCode.charAt(0) ));
         }
+
+        // DB-Instanz MUSS buildArtikelList aufrufen!
 
         p.setModified(false);
         return p;

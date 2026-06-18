@@ -3,7 +3,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 4.0.9
+ * @version 4.0.10
  *
  */
 
@@ -32,7 +32,7 @@ import javax.swing.text.JTextComponent;
 public class MainFrame extends JFrame {
 
     public final static String NAME     = "MythGraphics InkoProgramm";
-    public final static String VERSION  = "5.0.9";
+    public final static String VERSION  = "5.0.10";
     public final static DateFormat DF   = new SimpleDateFormat("dd.MM.yyyy");
 
     public static String SEVENZIP       = "C:\\Program Files\\7-Zip\\7z.exe";
@@ -957,15 +957,16 @@ public class MainFrame extends JFrame {
         }
         Patient currentPatient = patient;
         if ( patient.getId() != -1 ) {
-            currentPatient = pio.getPatientById( patient.getId() ); // lädt die aktuelle Patienten-Daten aus der DB
+            currentPatient = pio.getPatientById( patient.getId() ); // lädt die aktuellen Patienten-Daten aus der DB
         }
 
         if (currentPatient == null) {
-            System.err.println("loadEntry: Patient ist NULL");
+            System.err.println("loadEntry: currentPatient ist NULL");
             return;
         }
 
         patientTableModel.setPatient(currentPatient);
+        patientArtikelListModel.setPatient(currentPatient);
         loadEntryUpdateUI(currentPatient);
     }
 
@@ -1288,8 +1289,8 @@ public class MainFrame extends JFrame {
 
     protected void _jAddArtikelButtonActionPerformed(ActionEvent evt) {
         if ( jArtikelComboBox.getSelectedIndex() >= 0 ) {
-            Artikel artikel = ( (Artikel) jArtikelComboBox.getSelectedItem() );
-            artikel.setMenge( (Integer) jSpinner1.getValue() );
+            Artikel artikel = (( Artikel ) jArtikelComboBox.getSelectedItem() );
+            artikel.setMenge(( Integer ) jSpinner1.getValue() );
             patientArtikelListModel.addElement(artikel);
         }
     }
@@ -1302,8 +1303,8 @@ public class MainFrame extends JFrame {
 
     protected void _jChangeArtikelButtonActionPerformed(ActionEvent evt) {
         if ( jPatientArtikelList.getSelectedIndex() >= 0 ) {
-            Artikel artikel = ( (Artikel) jArtikelComboBox.getSelectedItem() ).clone();
-            artikel.setMenge( (Integer) jSpinner1.getValue() );
+            Artikel artikel = (( Artikel ) jArtikelComboBox.getSelectedItem() ).clone();
+            artikel.setMenge(( Integer ) jSpinner1.getValue() );
             patientArtikelListModel.set( jPatientArtikelList.getSelectedIndex(), artikel );
         }
     }
@@ -1463,7 +1464,7 @@ public class MainFrame extends JFrame {
 
     protected void jArtikelComboBoxEditorKeyReleased(KeyEvent evt) {
         if ( evt == null || evt.getKeyCode() == KeyEvent.VK_ENTER ) {
-            selectPZN(( (JTextComponent) jArtikelComboBox.getEditor().getEditorComponent() ).getText() );
+            selectPZN((( JTextComponent ) jArtikelComboBox.getEditor().getEditorComponent() ).getText() );
         }
     }
 
@@ -1656,7 +1657,7 @@ public class MainFrame extends JFrame {
     }
 
     private void initPatientComboBox() {
-        patientComboBoxModel = getNewPatientComboBox(patientComboBox, pio, patientTableModel, patientArtikelListModel);
+        patientComboBoxModel = getNewPatientComboBoxModel(patientComboBox, pio, patientTableModel, patientArtikelListModel);
 
         // zusätzliche ActionListener für patientComboBox hinzufügen
         patientComboBox.addActionListener( e -> {
@@ -1703,7 +1704,7 @@ public class MainFrame extends JFrame {
         patientComboBox.setSelectedIndex(0);
     }
 
-    static PatientComboBoxModel getNewPatientComboBox(final JComboBox<Patient> jComboBox, DBio pio, HasPatient... user) {
+    static PatientComboBoxModel getNewPatientComboBoxModel(final JComboBox<Patient> jComboBox, DBio pio, HasPatient... user) {
         PatientComboBoxModel patientComboBoxModel = new PatientComboBoxModel( pio.getPatientList() );
         jComboBox.setModel(patientComboBoxModel);
         jComboBox.setRenderer( new PatientListCellRenderer() );
