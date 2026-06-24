@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.1.2
+ * @version 1.1.3
  *
  */
 
@@ -20,6 +20,7 @@ import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -84,14 +85,13 @@ public class LocalDateCellEditor extends DefaultCellEditor {
     }
 
     private static LocalDate parseGermanShortDate(String text) {
-        // MM.yyyy, M.yyyy, MM.yy, M.yy
-        if ( text.length() == 3 ) {
-            text = "0" + text;
-        }
+        // MM.yyyy, M.yyyy, MM.yy, M.yy ('M' als 1- oder 2-stellige Monate)
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-            .appendPattern("[MM.yyyy]")
-            .appendPattern("[M.yyyy]")
-            .appendPattern("[MM.yy]")
+            .appendPattern("M.[yyyy]") // versuche zuerst 4-stelliges Jahr
+            .appendOptional( new DateTimeFormatterBuilder()
+                // falls 2-stellig: Basisjahr 2000
+                .appendValueReduced(ChronoField.YEAR, 2, 2, 2000)
+                .toFormatter())
             .toFormatter();
         return YearMonth.parse(text, formatter).atEndOfMonth(); // den letzten Tag des Monats berechnen
     }
