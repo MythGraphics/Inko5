@@ -115,7 +115,7 @@ public class InfoFrame extends JFrame implements HasPatient {
     /**
     * @param args the command line arguments
     */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         if ( args == null || args.length <= 0 ) {
             exec(SERVER);
         } else if ( !args[0].startsWith( "--" )) {

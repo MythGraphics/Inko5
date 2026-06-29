@@ -3,33 +3,38 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 2.1.3
+ * @version 3.0.0
  *
  */
 
 import static inko.PatientField.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.sql.Date;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
 import net.Login;
 
 public class DBio extends SQLConnection {
 
-    public final static String DB_NAME          = "inkodb";
+    public final static String DB               = "inkodb";
     public final static String TABLE_PATIENT    = "patienten";
     public final static String TABLE_ARTIKEL    = "artikel";
-    public final static String TABLE_DIVERSES   = "inkoapp";
+    public final static String TABLE_SIGNATURE  = "signature";
+    public final static String TABLE_APP        = "inkoapp";
+    public final static String[] SQL_APP_FIELD  = {"orte", "artikelpass"};
+    public final static String[] SQL_APP_TYPE   = {"text", "text"};
 
-    private final static String[] SQL_DIVERSES_FIELD = {"orte", "artikelpass"};
-    private final static String[] SQL_DIVERSES_TYPE  = {"text", "text"};
-
-    private List<Artikel> himiCache;
+    private List<Artikel> artikelCache;
 
     public DBio(String host, int port, Login login) {
-        super(host, port, login, DB_NAME);
+        super(host, port, login, DB);
     }
 
     public int savePatient(Patient p) {
@@ -50,13 +55,13 @@ public class DBio extends SQLConnection {
     }
 
     public ArrayList<String> getOrte() {
-        String sql = "SELECT " + SQL_DIVERSES_FIELD[0] + " FROM " + TABLE_DIVERSES;
+        String sql = "SELECT " + SQL_APP_FIELD[0] + " FROM " + TABLE_APP;
         try (
             Statement stmt = getConnection().createStatement();
             ResultSet result = stmt.executeQuery(sql)
         ) {
             if ( result.next() ) {
-                return parseString( result.getString( SQL_DIVERSES_FIELD[0] ));
+                return parseString( result.getString( SQL_APP_FIELD[0] ));
             }
         } catch (SQLException e) {
             exHandling(e);
@@ -65,13 +70,13 @@ public class DBio extends SQLConnection {
     }
 
     public char[] getArtikelPasswordHash() {
-        String sql = "SELECT " + SQL_DIVERSES_FIELD[1] + " FROM " + TABLE_DIVERSES;
+        String sql = "SELECT " + SQL_APP_FIELD[1] + " FROM " + TABLE_APP;
         try (
             Statement stmt = getConnection().createStatement();
             ResultSet result = stmt.executeQuery(sql)
         ) {
             if ( result.next() ) {
-                return result.getString( SQL_DIVERSES_FIELD[1] ).toCharArray();
+                return result.getString( SQL_APP_FIELD[1] ).toCharArray();
             }
         } catch (SQLException e) {
             exHandling(e);
@@ -160,13 +165,13 @@ public class DBio extends SQLConnection {
     }
 
     private void updateHimiCache(Artikel artikel) {
-        if (himiCache == null) {
+        if (artikelCache == null) {
             return;
         }
-        himiCache.stream()
-                 .filter( h -> h.getId() == artikel.getId() )
-                 .findFirst()
-                 .ifPresent( h -> himiCache.set( himiCache.indexOf( h ), artikel ));
+        artikelCache.stream()
+                    .filter( h -> h.getId() == artikel.getId() )
+                    .findFirst()
+                    .ifPresent( h -> artikelCache.set( artikelCache.indexOf( h ), artikel ));
     }
 
     public boolean deleteHimi(int id) {
@@ -184,7 +189,7 @@ public class DBio extends SQLConnection {
 
     public int updateOrte(String s) {
         return write(
-            "UPDATE " + TABLE_DIVERSES + " SET " + SQL_DIVERSES_FIELD[0] + " = ('" + s.replaceAll("\n", " ") + "');"
+            "UPDATE " + TABLE_APP + " SET " + SQL_APP_FIELD[0] + " = ('" + s.replaceAll("\n", " ") + "');"
         );
     }
 
@@ -208,7 +213,7 @@ public class DBio extends SQLConnection {
             }
         }
         p.setId( rs.getInt( ID.getDBName() ));
-        p.buildArtikelList(himiCache);
+        p.buildArtikelList(artikelCache);
         p.setModified(false);
         return p;
     }
@@ -232,7 +237,7 @@ public class DBio extends SQLConnection {
         String sql = "UPDATE " + TABLE_PATIENT + " SET " +
                      ARTIKELLISTE.getDBName() + "='" +
                      p.getRawArtikelList() + "'," +
-                     ARTIKELMENGE.getDBName() + "='" +
+                     MENGENLISTE.getDBName() + "='" +
                      p.getRawMengenList() + "' WHERE " +
                      ID.getDBName() + "='" + p.getId() + "'";
         try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
@@ -244,19 +249,19 @@ public class DBio extends SQLConnection {
     }
 
     private void loadArtikel(Patient p) throws SQLException {
-        if ( himiCache == null ) {
-            himiCache = getArtikelList();
+        if ( artikelCache == null ) {
+            artikelCache = getArtikelList();
         }
-        p.buildArtikelList(himiCache);
+        p.buildArtikelList(artikelCache);
     }
 
     public void deleteArtikelCache() {
-        himiCache = null;
+        artikelCache = null;
     }
 
     public List<Artikel> getArtikelList() {
-        if ( himiCache != null ) {
-            return himiCache;
+        if ( artikelCache != null ) {
+            return artikelCache;
         }
         String sql = "SELECT * FROM " + TABLE_ARTIKEL + " ORDER BY " + ArtikelField.NAME.getDBName() + " ASC";
         ArrayList<Artikel> list = new ArrayList<>();
@@ -269,7 +274,7 @@ public class DBio extends SQLConnection {
                 }
                 list.add(artikel);
             }
-            himiCache = list;
+            artikelCache = list;
         } catch (SQLException e) {
             exHandling(e);
         }
@@ -306,7 +311,7 @@ public class DBio extends SQLConnection {
         try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
             ResultSet rs = pstmt.executeQuery();
             while ( rs.next() ) {
-                model.addElement( rs.getString(1) + ", " + rs.getString(2) );
+                model.addElement( rs.getString( 1 ) + ", " + rs.getString( 2 ));
             }
         } catch (SQLException e) {
             exHandling(e);
@@ -398,20 +403,82 @@ public class DBio extends SQLConnection {
         return false;
     }
 
-    static void firstRun_DB(SQLConnection io) {
-        System.out.println( io.write( "CREATE DATABASE " + DB_NAME + ";" ));
-        System.out.println( io.write( "USE " + DB_NAME + ";" ));
+    public Map<SignableDocument, BufferedImage> getSignatureMap(int patientId) {
+        Map<SignableDocument, BufferedImage> map = new HashMap<>();
+        String sql = "SELECT * FROM " + TABLE_SIGNATURE + " WHERE id = ?";
+        try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
+            pstmt.setInt(1, patientId);
+            try ( ResultSet rs = pstmt.executeQuery() ) {
+                mapImg( rs.getBytes(2), map );
+                mapImg( rs.getBytes(4), map );
+                mapImg( rs.getBytes(6), map );
+            }
+        } catch (SQLException e) {
+            exHandling(e);
+        } catch (IOException e) {
+            System.err.println( "Message: " + e.getMessage() );
+        }
+        return map;
     }
 
-    static void firstRun_Diverses(SQLConnection io) {
+    private void mapImg(byte[] imageBytes, Map<SignableDocument, BufferedImage> map) throws IOException {
+        if (imageBytes != null && imageBytes.length > 0) {
+            BufferedImage sign = SignatureServer.convertBytesToImage(imageBytes);
+            map.put(SignableDocument.BERATUNG, sign);
+        }
+    }
+
+    public void updateSignature(int patientId, BufferedImage sign, SignableDocument document) {
+        String sql = "REPLACE INTO " + TABLE_SIGNATURE + " (" +
+                     SignatureField.PATIENT_ID.getDBName() + ", " +
+                     document.getImgField().getDBName() + ", " +
+                     document.getDateField().getDBName() +
+                     ") VALUES (?, ?, ?)";
+        System.out.println(sql); // debug
+        if (sign == null) {
+            try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
+                pstmt.setInt(  1, patientId );
+                pstmt.setNull( 2, java.sql.Types.BLOB );
+                pstmt.setDate( 3, Date.valueOf( LocalDate.now() ));
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                exHandling(e);
+            }
+        } else {
+            try ( ByteArrayOutputStream out = new ByteArrayOutputStream() ) {
+                // BufferedImage zurück in komprimierte PNG-Bytes wandeln
+                ImageIO.write(sign, "png", out);
+                byte[] imageBytes = out.toByteArray();
+
+                try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
+                    pstmt.setInt( 1, patientId );
+                    // ByteArrayInputStream übergibt die Bytes direkt an das BLOB-Feld
+                    pstmt.setBinaryStream( 2, new ByteArrayInputStream( imageBytes ), imageBytes.length );
+                    pstmt.setDate( 3, Date.valueOf( LocalDate.now() ));
+                    pstmt.executeUpdate();
+                }
+            } catch (SQLException e) {
+                exHandling(e);
+            } catch (IOException e) {
+                System.err.println( "Message: " + e.getMessage() );
+            }
+        }
+    }
+
+    static void firstRun_DB(SQLConnection io) {
+        System.out.println( io.write( "CREATE DATABASE " + DB + ";" ));
+        System.out.println( io.write( "USE " + DB + ";" ));
+    }
+
+    static void firstRun_App(SQLConnection io) {
         String orte = String.join( " ", Location.ORTE );
         StringBuilder sb = new StringBuilder( "CREATE TABLE IF NOT EXISTS " );
-        sb.append( TABLE_DIVERSES );
+        sb.append( TABLE_APP );
         sb.append( " (" );
-        for (int i = 0; i < SQL_DIVERSES_FIELD.length; ++i) {
-            sb.append( SQL_DIVERSES_FIELD[i] );
+        for (int i = 0; i < SQL_APP_FIELD.length; ++i) {
+            sb.append( SQL_APP_FIELD[i] );
             sb.append( " " );
-            sb.append( SQL_DIVERSES_TYPE[i] );
+            sb.append( SQL_APP_TYPE[i] );
             sb.append( "," );
         }
         sb.deleteCharAt( sb.length()-1 );
@@ -427,10 +494,25 @@ public class DBio extends SQLConnection {
         StringBuilder sb = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
         sb.append(TABLE_PATIENT);
         sb.append(" (");
-        for (int i = 0; i < DB_FIELDS.size(); ++i) {
-            sb.append( DB_FIELDS.get(i).getDBName() );
+        for ( PatientField field : DB_FIELDS ) {
+            sb.append( field.getDBName() );
             sb.append( " " );
-            sb.append( DB_FIELDS.get(i).getDBType() );
+            sb.append( field.getDBType() );
+            sb.append( "," );
+        }
+        sb.deleteCharAt( sb.length()-1 );
+        sb.append( ");" );
+        System.out.println( io.write( sb.toString() ));
+    }
+
+    static void firstRun_Signature(SQLConnection io) {
+        StringBuilder sb = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
+        sb.append(TABLE_SIGNATURE);
+        sb.append(" (");
+        for ( SignatureField field : SignatureField.values() ) {
+            sb.append( field.getDBName() );
+            sb.append( " " );
+            sb.append( field.getDBType() );
             sb.append( "," );
         }
         sb.deleteCharAt( sb.length()-1 );
@@ -442,10 +524,10 @@ public class DBio extends SQLConnection {
         StringBuilder sb = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
         sb.append(TABLE_ARTIKEL);
         sb.append(" (");
-        for (int i = 0; i < ArtikelField.values().length; ++i) {
-            sb.append( ArtikelField.values()[i].getDBName() );
+        for ( ArtikelField field : ArtikelField.values() ) {
+            sb.append( field.getDBName() );
             sb.append( " " );
-            sb.append( ArtikelField.values()[i].getDBType() );
+            sb.append( field.getDBType() );
             sb.append( "," );
         }
         sb.deleteCharAt( sb.length()-1 );
@@ -459,8 +541,9 @@ public class DBio extends SQLConnection {
         )) {
             io.connect();
             firstRun_DB(io);
-            firstRun_Diverses(io);
+            firstRun_App(io);
             firstRun_Artikel(io);
+            firstRun_Signature(io);
             firstRun_Patienten(io);
         }
     }

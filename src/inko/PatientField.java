@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.2
+ * @version 1.1.0
  *
  */
 
@@ -43,8 +43,8 @@ public enum PatientField {
     LIEFERN("liefern", "boolean", "Liefern?", Boolean.class, "⚕liefern⚕"),
     BEFREIUNGSDATUM("befreiungsdatum", "date", "befreit bis", LocalDate.class, "⚕frei⚕"),
     TYP("typ", "character(1)", "Typ-Zeichen", String.class, "⚕typ⚕"), // PatientType.getCode()
-    ARTIKELMENGE("artikelmenge", "tinytext", "Artikelmengen", String.class, null), // Liste wird als Strings in DB gespeichert
-    ARTIKELLISTE("artikelliste", "tinytext", "Artikelliste", String.class, null), // Liste wird als Strings in DB gespeichert
+    MENGENLISTE("mengenliste", "tinytext", "Artikelmengenliste", String.class, "⚕mengen_liste⚕"),
+    ARTIKELLISTE("artikelliste", "tinytext", "Artikelliste", String.class, "⚕artikel_liste⚕"),
     PAUSE("pause", "boolean", "Patient pausiert?", Boolean.class, "⚕pause⚕"),
 
     // --- TEMPLATE FELDER (existieren so nicht in der DB) ---

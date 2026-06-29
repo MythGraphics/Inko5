@@ -7,12 +7,13 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 6.1.3
+ * @version 6.3.0
  *
  */
 
 import static inko.InkoType.SAUGEND;
 import static inko.PatientField.*;
+import java.awt.image.BufferedImage;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,29 +42,30 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     // sucht alles zwischen zwei ⚕
     private final static Pattern TEMPLATE_PATTERN = Pattern.compile("⚕([^⚕]+)⚕");
 
-    private int id                                  = -1;
-    private String lastName                         = "";
-    private String firstName                        = "";
-    private String street                           = "";
-    private Integer zipCode                         = 0;
-    private String city                             = "";
-    private LocalDate birthDate                     = DEFAULT_DATE;
-    private Integer healthInsurerIK                 = 0;
-    private String insurenceNumber                  = ""; // als String, da sie immer mit einem Buchstaben beginnt
-    private String phoneNumber                      = "";
-    private String comment                          = "";
-    private LocalDate prescriptionDate              = DEFAULT_DATE;
-    private LocalDate firstSupplyDate               = DEFAULT_DATE;
-    private LocalDate prescriptionExpiringDate      = DEFAULT_DATE;
-    private LocalDate bindingExpiringDate           = DEFAULT_DATE;
-    private LocalDate coPaymentFreeUntil            = DEFAULT_DATE;
-    private InkoType type                           = SAUGEND;
-    private List<Artikel> itemList                  = new ArrayList<>();
-    private List<Integer> itemIdList                = new ArrayList<>();
-    private List<Integer> mengenList                = new ArrayList<>();
-    private boolean deliver                         = false;
-    private boolean paused                          = false;
-    private boolean modified                        = false; // NUR für DB-Einträge
+    private int id                                          = -1;
+    private String lastName                                 = "";
+    private String firstName                                = "";
+    private String street                                   = "";
+    private Integer zipCode                                 = 0;
+    private String city                                     = "";
+    private LocalDate birthDate                             = DEFAULT_DATE;
+    private Integer healthInsurerIK                         = 0;
+    private String insurenceNumber                          = ""; // als String, da sie immer mit einem Buchstaben beginnt
+    private String phoneNumber                              = "";
+    private String comment                                  = "";
+    private LocalDate prescriptionDate                      = DEFAULT_DATE;
+    private LocalDate firstSupplyDate                       = DEFAULT_DATE;
+    private LocalDate prescriptionExpiringDate              = DEFAULT_DATE;
+    private LocalDate bindingExpiringDate                   = DEFAULT_DATE;
+    private LocalDate coPaymentFreeUntil                    = DEFAULT_DATE;
+    private InkoType type                                   = SAUGEND;
+    private List<Artikel> itemList                          = new ArrayList<>();
+    private List<Integer> itemIdList                        = new ArrayList<>();
+    private List<Integer> mengenList                        = new ArrayList<>();
+    private Map<SignableDocument, BufferedImage> signMap    = new HashMap<>();
+    private boolean deliver                                 = false;
+    private boolean paused                                  = false;
+    private boolean modified                                = false; // NUR für DB-Einträge
 
     public Patient() {}
 
@@ -89,6 +91,14 @@ public class Patient implements Comparable<Patient>, HasArtikel {
 
     public String getComment() {
         return comment;
+    }
+
+    public BufferedImage getSign(SignableDocument document) {
+        return signMap.get(document);
+    }
+
+    public void setSign(SignableDocument document, BufferedImage signImage) {
+        signMap.put(document, signImage);
     }
 
     /**
@@ -511,7 +521,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
 
         // Artikel-Listen als Row-Daten
         p.setArtikelIdList(                         rs.getString(   ARTIKELLISTE.getDBName()    ));
-        p.setMengenList(                            rs.getString(   ARTIKELMENGE.getDBName()    ));
+        p.setMengenList(                            rs.getString(   MENGENLISTE.getDBName()    ));
 
         String typeCode =                           rs.getString(   TYP.getDBName()             );
         if ( typeCode != null && !typeCode.isEmpty() ) {
@@ -631,7 +641,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
             case PAUSE:             paused                      = Boolean.parseBoolean(value);              break;
             case BEFREIUNGSDATUM:   coPaymentFreeUntil          = LocalDate.parse(value);                   break;
             case TYP:               type                        = InkoType.fromCode( value.charAt( 0 ));    break;
-            case ARTIKELMENGE:      setMengenList(value);                                                   break;
+            case MENGENLISTE:       setMengenList(value);                                                   break;
             case ARTIKELLISTE:      setArtikelIdList(value);                                                break;
             default: throw new NoSuchElementException("Feld \"" + field + "\" unbekannt.");
         }
@@ -679,7 +689,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
             case PAUSE:             return paused;
             case BEFREIUNGSDATUM:   return coPaymentFreeUntil;
             case TYP:               return type.getCode();
-            case ARTIKELMENGE:      return getRawMengenList();
+            case MENGENLISTE:       return getRawMengenList();
             case ARTIKELLISTE:      return getRawArtikelList();
             case BESONDERHEITEN:    return getBesonderheiten();
             case ACTK:              return getACTK();

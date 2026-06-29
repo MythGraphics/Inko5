@@ -3,16 +3,21 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 4.0.11
+ * @version 4.1.0
  *
  */
 
+import com.google.zxing.WriterException;
+import com.sun.net.httpserver.HttpServer;
 import static inko.InkoType.*;
 import static inko.PatientField.*;
+import static inko.SignableDocument.*;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -28,12 +33,16 @@ import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.text.JTextComponent;
+import static util.Net.getLocalIpAddress;
+import static util.QRCodeGenerator.generateQRCodeImage;
 
 public class MainFrame extends JFrame {
 
     public final static String NAME     = "MythGraphics InkoProgramm";
-    public final static String VERSION  = "5.0.11";
+    public final static String VERSION  = "5.1.0";
     public final static DateFormat DF   = new SimpleDateFormat("dd.MM.yyyy");
+    public final static Color RED       = new Color(255,102,102);
+    public final static Color GREEN     = new Color(51,255,51);
 
     public static String SEVENZIP       = "C:\\Program Files\\7-Zip\\7z.exe";
     public static String OO             = "P:\\OpenOffice 4\\program\\soffice.exe";
@@ -58,6 +67,7 @@ public class MainFrame extends JFrame {
     private ArtikelFrame artikelFrame;
     private String insurenceInfo = "";
     private boolean isAdjusting  = false;
+    private HttpServer signServer;
 
     public MainFrame() {
         outpath = System.getProperty("user.dir") + "\\Inko-Dokumente\\";
@@ -150,6 +160,10 @@ public class MainFrame extends JFrame {
         jLocationButton = new javax.swing.JButton();
         jButtonADG = new javax.swing.JButton();
         jButtonNewRx = new javax.swing.JButton();
+        jPanel4 = new javax.swing.JPanel();
+        jButtonSignBeratung = new javax.swing.JButton();
+        jButtonSignBindung = new javax.swing.JButton();
+        jButtonSignMehrkosten = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem15 = new javax.swing.JMenuItem();
@@ -656,6 +670,34 @@ public class MainFrame extends JFrame {
 
         jTabbedPane1.addTab("Sonstiges", jPanel3);
 
+        jPanel4.setLayout(new java.awt.GridLayout());
+
+        jButtonSignBeratung.setText("Beratungsbogen");
+        jButtonSignBeratung.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSignBeratungActionPerformed(evt);
+            }
+        });
+        jPanel4.add(jButtonSignBeratung);
+
+        jButtonSignBindung.setText("Bindungserklärung");
+        jButtonSignBindung.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSignBindungActionPerformed(evt);
+            }
+        });
+        jPanel4.add(jButtonSignBindung);
+
+        jButtonSignMehrkosten.setText("Erklärung zu Mehrkosten");
+        jButtonSignMehrkosten.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSignMehrkostenActionPerformed(evt);
+            }
+        });
+        jPanel4.add(jButtonSignMehrkosten);
+
+        jTabbedPane1.addTab("Unterschriften", jPanel4);
+
         jMenu1.setText("Artikel");
 
         jMenuItem15.setText("Artikel anlegen / ändern");
@@ -873,7 +915,7 @@ public class MainFrame extends JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         if (args.length == 0) {
             showGUI();
             return;
@@ -981,6 +1023,22 @@ public class MainFrame extends JFrame {
         insurenceTextField.setText( patient.getHealthInsurer() );
         setTypeUI();
         typeChangeActionPerformed();
+
+        if ( patient.getSign( BERATUNG ) != null ) {
+            BeratungsbogenButton.setBackground(GREEN);
+        } else {
+            BeratungsbogenButton.setBackground(RED);
+        }
+        if ( patient.getSign( BINDUNG ) != null ) {
+            BindungserklärungButton.setBackground(GREEN);
+        } else {
+            BindungserklärungButton.setBackground(RED);
+        }
+        if ( patient.getSign( MEHRKOSTEN ) != null ) {
+            MehrkostenerklärungButton.setBackground(GREEN);
+        } else {
+            MehrkostenerklärungButton.setBackground(RED);
+        }
 
         refreshArtikelComboBox();
         jTable1.requestFocus();
@@ -1104,6 +1162,9 @@ public class MainFrame extends JFrame {
             compareFrame.dispose();
         }
         super.dispose();
+        if (signServer != null) {
+            signServer.stop(0);
+        }
         System.exit(0);
     }
 
@@ -1447,6 +1508,58 @@ public class MainFrame extends JFrame {
         ));
     }//GEN-LAST:event_jUpButtonActionPerformed
 
+    private void sign(int patientId, SignableDocument document) {
+        startServer();
+        showQRCode(patientId, document);
+    }
+
+    private void startServer() {
+        if (signServer == null) {
+            try {
+                signServer = SignatureServer.startServer();
+            } catch (IOException e) {
+                statusField.showError( e.getMessage() );
+            }
+        }
+    }
+
+    private void showQRCode(int patientId, SignableDocument document) {
+        String localIp = getLocalIpAddress();
+        String url = "http://" + localIp + ":" + SignatureServer.PORT +
+                     "/signature?patientId=" + patientId + "?document=" + document;
+        System.out.println(url); // debug
+
+        try {
+            BufferedImage qrCodeImage = generateQRCodeImage(url, 300, 300);
+            EventQueue.invokeLater( () -> {
+                JLabel qrLabel = new JLabel( new ImageIcon( qrCodeImage ));
+
+                // in einem eigenen JDialog anzeigen
+                JOptionPane.showMessageDialog(
+                    this,
+                    qrLabel,
+                    "Bitte mit dem Tablet scannen",
+                    JOptionPane.PLAIN_MESSAGE
+                );
+            });
+        } catch (WriterException e) {
+            e.printStackTrace();
+            statusField.showError("Fehler beim Generieren des QR-Codes.");
+        }
+    }
+
+    private void jButtonSignBeratungActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSignBeratungActionPerformed
+        sign( patientTableModel.getPatient().getId(), SignableDocument.BERATUNG );
+    }//GEN-LAST:event_jButtonSignBeratungActionPerformed
+
+    private void jButtonSignBindungActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSignBindungActionPerformed
+        sign( patientTableModel.getPatient().getId(), SignableDocument.BINDUNG );
+    }//GEN-LAST:event_jButtonSignBindungActionPerformed
+
+    private void jButtonSignMehrkostenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSignMehrkostenActionPerformed
+        sign( patientTableModel.getPatient().getId(), SignableDocument.MEHRKOSTEN );
+    }//GEN-LAST:event_jButtonSignMehrkostenActionPerformed
+
     private void selectPZN(String ref) {
         int refValue;
         try {
@@ -1633,6 +1746,8 @@ public class MainFrame extends JFrame {
         radioGroup1.add(sRadioButton);
         radioGroup1.add(kRadioButton);
 
+        UIManager.put("CheckBox.disabledText", Color.BLACK);
+
         new File(outpath).mkdir();
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener( "permanentFocusOwner", e -> {
@@ -1763,6 +1878,9 @@ public class MainFrame extends JFrame {
     private javax.swing.JButton jButtonArtikelListe;
     private javax.swing.JButton jButtonArtikelListe2;
     private javax.swing.JButton jButtonNewRx;
+    private javax.swing.JButton jButtonSignBeratung;
+    private javax.swing.JButton jButtonSignBindung;
+    private javax.swing.JButton jButtonSignMehrkosten;
     private javax.swing.JButton jChangeArtikelButton;
     protected javax.swing.JButton jCreateArtikelButton;
     protected javax.swing.JButton jDownButton;
@@ -1804,6 +1922,7 @@ public class MainFrame extends JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     protected javax.swing.JList<inko.Artikel> jPatientArtikelList;
     private javax.swing.JButton jRemoveArtikelButton;
     private javax.swing.JButton jRxFaelligButton;

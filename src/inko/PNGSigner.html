@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Patienten-Unterschrift</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            width: 100%;
+            height: 300px;
+            touch-action: none; /* Verhindert das Scrollen beim Zeichnen */
+        }
+        .buttons {
+            margin-top: 20px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .btn-clear { background-color: #e0e0e0; color: #333; }
+        .btn-submit { background-color: #007bff; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Bitte unterschreiben Sie hier</h2>
+        <canvas id="signature-pad"></canvas>
+
+        <div class="buttons">
+            <button class="btn-clear" id="clear-button">Löschen</button>
+            <button class="btn-submit" id="save-button">Bestätigen</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script>
+        const canvas = document.getElementById('signature-pad');
+
+        // Canvas an Display-Auflösung anpassen (wichtig für scharfe Linien auf Retina/High-Res Displays)
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+
+        const signaturePad = new SignaturePad( canvas, {
+            minWidth: 1,
+            maxWidth: 3,
+            penColor: "rgb(0, 0, 0)" // schwarz
+        });
+
+        // Löschen-Button
+        document.getElementById('clear-button').addEventListener( 'click', () => {
+            signaturePad.clear();
+        });
+
+        // Absenden-Button
+        document.getElementById('save-button').addEventListener( 'click', () => {
+            if ( signaturePad.isEmpty() ) {
+                alert("Feld ist leer. Bitte unterschreiben.");
+                return;
+            }
+
+            // Als PNG (Base64) exportieren
+            const dataURL = signaturePad.toDataURL('image/png');
+
+            // Relative URL nutzen, da HTML und Endpunkt vom selben Server kommen
+            // window.location.search hängt die Parameter der aktuellen Browser-Adresse automatisch an den POST-Request an
+            fetch( '/signature' + window.location.search, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then( response => {
+                if (response.ok) {
+                    alert("Unterschrift erfolgreich übertragen.");
+                    signaturePad.clear();
+                } else {
+                    alert("Fehler bei der Übertragung.");
+                }
+            })
+            .catch( error => {
+                console.error('Error:', error);
+                alert("Verbindung zum Server fehlgeschlagen.");
+            });
+        });
+    </script>
+
+</body>
+</html>

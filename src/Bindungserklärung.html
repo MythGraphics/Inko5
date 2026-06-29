@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bindungserklärung des Versicherten</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px auto;
+            max-width: 800px;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        h2 {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+        .intro-text {
+            margin: 20px 0;
+            font-size: 1.05rem;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .form-group label {
+            font-weight: bold;
+            min-width: 200px;
+        }
+        .form-group input[type="text"] {
+            flex: 1;
+            border: none;
+            border-bottom: 1px solid #000;
+            padding: 2px 5px;
+            outline: none;
+        }
+        .form-group label.form-text {
+            font-weight: normal;
+        }
+        .stempel-box {
+            border: 1px dashed #666;
+            padding: 40px 20px;
+            text-align: center;
+            margin: 30px 0;
+            background-color: #fafafa;
+        }
+        .content-section {
+            margin-top: 25px;
+            text-align: justify;
+        }
+        ul {
+            margin-top: 5px;
+            padding-left: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 60px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            resize: vertical;
+        }
+        .signature-container {
+            margin-top: 60px;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            padding-top: 5px;
+        }
+        .date-location {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Vertrag gemäß § 127 Abs. 2 SGB V über die Versorgung mit Inkontinenzhilfsmitteln</h1>
+    <h2>Anlage 4: Bindungserklärung des Versicherten</h2>
+
+    <form>
+        <div class="form-group">
+            <label>Name, Vorname des Versicherten:</label>
+            <label class="form-text">⚕name⚕, ⚕vorname⚕</label>
+        </div>
+        <div class="form-group">
+            <label>Straße:</label>
+            <label class="form-text">⚕straße⚕</label>
+        </div>
+        <div class="form-group">
+            <label>PLZ, Ort:</label>
+            <label class="form-text">⚕plz⚕ ⚕ort⚕</label>
+        </div>
+
+        <p class="intro-text">erhält von der <strong>⚕kk_name⚕</strong> Inkontinenzhilfsmittel.</p>
+
+        <p>Die Versorgung erfolgt durch</p>
+        <div class="stempel-box">
+            Stadt-Apotheke<br>
+            Inhaber Martin Pröhl<br>
+            Bahnhofstr. 79<br>
+            38486 Klötze
+        </div>
+
+        <div class="content-section">
+            <p>Der oben genannte Vertragspartner der ⚕kk_name⚕ hat mich heute über meine Versorgung mit ⚕typ_str⚕en Inkontinenzhilfsmitteln beraten, mich in den Gebrauch der Hilfsmittel eingewiesen und die Liefertermine mit mir abgesprochen.</p>
+            <p>Ich beauftrage den oben genannten Vertragspartner, mich über einen Zeitraum von zwei Jahren mit diesen Hilfsmitteln zu versorgen.</p>
+            <p>Ich erkläre, keinen anderen Leistungserbringer mit der Inkontinenzhilfsmittelversorgung beauftragt zu haben und ich verpflichte mich, für die Dauer von zwei Jahren keinen solchen Auftrag an ein anderweitiges Unternehmen zu erteilen.</p>
+            <p>Ich verpflichte mich, meinen beauftragten Vertragspartner über versorgungsrelevante Änderungen in meinen persönlichen Verhältnissen unverzüglich zu informieren:</p>
+
+            <ul>
+                <li>Wegfall der Notwendigkeit der Versorgung</li>
+                <li>Kassenwechsel</li>
+                <li>Wohnungswechsel</li>
+                <li>die Aufnahme in eine stationäre Pflegeeinrichtung</li>
+                <li>stationäre Krankenhaus- oder Rehabilitationsbehandlung über einen Kalendermonat und länger</li>
+            </ul>
+
+            <p>Ich bin informiert, dass ich die Kosten einer zusätzlichen Versorgung selbst zu tragen habe.</p>
+        </div>
+
+        <div class="content-section">
+            <strong>Bemerkungen:</strong>
+            <textarea id="bemerkungen" name="bemerkungen">⚕besonderheiten⚕</textarea>
+        </div>
+
+        <p style="margin-top: 30px; font-style: italic;">Eine Durchschrift der Erklärung habe ich erhalten.</p>
+
+        <div class="signature-container">
+            <div class="date-location">
+                Klötze, ⚕date_bindung⚕
+            </div>
+            <div class="stempel-box">
+                 ⚕sign_bindung⚕
+            </div>
+            <div class="signature-line">
+                Ort, Datum / Unterschrift des Anspruchsberechtigten, Betreuer oder Bevollmächtigten
+            </div>
+        </div>
+    </form>
+
+</body>
+</html>
