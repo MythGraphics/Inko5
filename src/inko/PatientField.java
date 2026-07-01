@@ -15,7 +15,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -32,15 +31,15 @@ public enum PatientField {
     PLZ("postcode", "int(5) unsigned", "PLZ", String.class, "⚕plz⚕"),
     ORT("city", "tinytext", "Wohnort", String.class, "⚕ort⚕"),
     GEBURTSDATUM("birthday", "date", "Geburtsdatum", LocalDate.class, "⚕gdatum⚕"),
-    KK_IK("kk_ik", "int(9) unsigned", "IK Krankenkassen", Integer.class, "⚕kk⚕"),
-    KV_NUMMER("kv_number", "tinytext", "KV-Nummer", String.class, "⚕kvn⚕"),
-    TELEFON("telefon", "tinytext", "Telefon-Nummer", String.class, "⚕tel⚕"),
+    KK_IK("health_insurence_ik", "int(9) unsigned", "IK Krankenkassen", Integer.class, "⚕kk⚕"),
+    KV_NUMMER("health_insurence_number", "tinytext", "KV-Nummer", String.class, "⚕kvn⚕"),
+    FON("phone", "tinytext", "Telefon-Nummer", String.class, "⚕tel⚕"),
     KOMMENTAR("comment", "text", "Kommentar", String.class, "⚕kommentar⚕"),
     RX_DATUM("rx_date", "date", "Rezeptdatum", LocalDate.class, "⚕rxdatum⚕"),
-    ERSTBELIEFERUNG("erstbelieferung", "date", "Erstbelieferung", LocalDate.class, "⚕erstbelieferung⚕"),
-    ENDE_GENEHMIGUNG("ende_genehmigung", "date", "Ende Genehmigungszeitraum", LocalDate.class, "⚕gzeit⚕"),
-    ENDE_BINDUNG("ende_bindung", "date", "Ende Bindungszeitraum", LocalDate.class, "⚕bzeit⚕"),
-    LIEFERN("liefern", "boolean", "Liefern?", Boolean.class, "⚕liefern⚕"),
+    ERSTBELIEFERUNG("first_supply", "date", "Erstbelieferung", LocalDate.class, "⚕erstbelieferung⚕"),
+    ENDE_GENEHMIGUNG("end_of_licence_date", "date", "Ende Genehmigungszeitraum", LocalDate.class, "⚕gzeit⚕"),
+    ENDE_BINDUNG("end_of_binding_date", "date", "Ende Bindungszeitraum", LocalDate.class, "⚕bzeit⚕"),
+    LIEFERN("deliver", "boolean", "Liefern?", Boolean.class, "⚕liefern⚕"),
     BEFREIUNGSDATUM("befreiungsdatum", "date", "befreit bis", LocalDate.class, "⚕frei⚕"),
     TYP("typ", "character(1)", "Typ-Zeichen", String.class, "⚕typ⚕"), // PatientType.getCode()
     MENGENLISTE("mengenliste", "tinytext", "Artikelmengenliste", String.class, "⚕mengen_liste⚕"),
@@ -52,7 +51,7 @@ public enum PatientField {
     ACTK(null, null, "ACTK", String.class, "⚕actk⚕"),
     KK_NAME(null, null, "Krankenkasse", String.class, "⚕kk_name⚕"),
     TYPE_LABEL(null, null, "Typ", String.class, "⚕typ_str⚕"), // PatientType.getLabel()
-    HIMI(null, null, "Hilfsmittel", String.class, "⚕hm⚕"); // Himi-String via getHimiListAsString()
+    HIMI(null, null, "Hilfsmittel", String.class, "⚕hm⚕"); // getHimiListAsString()
 
     // Performance-Optimierung: Statische Listen für Java 8
     public final static List<PatientField> DB_FIELDS;
@@ -63,13 +62,6 @@ public enum PatientField {
     public final static String UI_FIELD_STRING;
     public final static String INSERT_COLUMNS;
     public final static String INSERT_PLACEHOLDERS;
-    public final static Map<String, PatientField> TAG_MAP =
-        Arrays.stream( PatientField.values() )
-              .filter( f -> f.getTemplate() != null )
-              .collect( Collectors.toMap(
-                  f -> f.getTemplate().replace("⚕", ""), // "⚕name⚕" -> "name"
-                  f -> f
-    ));
 
     static {
         // alle Felder, die eine Spalte in der DB haben
@@ -101,7 +93,7 @@ public enum PatientField {
             GEBURTSDATUM,
             KK_IK,
             KV_NUMMER,
-            TELEFON,
+            FON,
             KOMMENTAR,
             RX_DATUM,
             ERSTBELIEFERUNG,
@@ -117,7 +109,7 @@ public enum PatientField {
             GEBURTSDATUM,
             KK_IK,
             KV_NUMMER,
-            TELEFON,
+            FON,
             BEFREIUNGSDATUM
         ));
 

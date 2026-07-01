@@ -129,7 +129,7 @@ public class SignatureServer {
                     BufferedImage signImage = convertBytesToImage(imageBytes);
                     Patient patient = getPatientById( Integer.parseInt( patientId ));
                     if (patient != null) {
-                        patient.setSign(document, signImage);
+                        patient.setSignature( new Signature( document, signImage ));
                         refreshUI(patient);
                         sendResponse(exchange, 200, "OK");
                     } else {

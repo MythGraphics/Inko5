@@ -13,6 +13,8 @@ package inko;
 
 import static inko.InkoType.SAUGEND;
 import static inko.PatientField.*;
+import static inko.SignatureField.*;
+import static inko.SignableDocument.*;
 import java.awt.image.BufferedImage;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,35 +41,56 @@ public class Patient implements Comparable<Patient>, HasArtikel {
 
     public final static String ARTIKEL_SEPARATOR = ", ";
 
+    public final static Map<String, Enum> TAG_MAP = initTagMap();
+
     // sucht alles zwischen zwei ⚕
     private final static Pattern TEMPLATE_PATTERN = Pattern.compile("⚕([^⚕]+)⚕");
 
-    private int id                                          = -1;
-    private String lastName                                 = "";
-    private String firstName                                = "";
-    private String street                                   = "";
-    private Integer zipCode                                 = 0;
-    private String city                                     = "";
-    private LocalDate birthDate                             = DEFAULT_DATE;
-    private Integer healthInsurerIK                         = 0;
-    private String insurenceNumber                          = ""; // als String, da sie immer mit einem Buchstaben beginnt
-    private String phoneNumber                              = "";
-    private String comment                                  = "";
-    private LocalDate prescriptionDate                      = DEFAULT_DATE;
-    private LocalDate firstSupplyDate                       = DEFAULT_DATE;
-    private LocalDate prescriptionExpiringDate              = DEFAULT_DATE;
-    private LocalDate bindingExpiringDate                   = DEFAULT_DATE;
-    private LocalDate coPaymentFreeUntil                    = DEFAULT_DATE;
-    private InkoType type                                   = SAUGEND;
-    private List<Artikel> itemList                          = new ArrayList<>();
-    private List<Integer> itemIdList                        = new ArrayList<>();
-    private List<Integer> mengenList                        = new ArrayList<>();
-    private Map<SignableDocument, BufferedImage> signMap    = new HashMap<>();
-    private boolean deliver                                 = false;
-    private boolean paused                                  = false;
-    private boolean modified                                = false; // NUR für DB-Einträge
+    private int id                                      = -1;
+    private String lastName                             = "";
+    private String firstName                            = "";
+    private String street                               = "";
+    private Integer zipCode                             = 0;
+    private String city                                 = "";
+    private LocalDate birthDate                         = DEFAULT_DATE;
+    private Integer healthInsurerIK                     = 0;
+    private String insurenceNumber                      = ""; // als String, da sie immer mit einem Buchstaben beginnt
+    private String phoneNumber                          = "";
+    private String comment                              = "";
+    private LocalDate prescriptionDate                  = DEFAULT_DATE;
+    private LocalDate firstSupplyDate                   = DEFAULT_DATE;
+    private LocalDate prescriptionExpiringDate          = DEFAULT_DATE;
+    private LocalDate bindingExpiringDate               = DEFAULT_DATE;
+    private LocalDate coPaymentFreeUntil                = DEFAULT_DATE;
+    private InkoType type                               = SAUGEND;
+    private List<Artikel> itemList                      = new ArrayList<>();
+    private List<Integer> itemIdList                    = new ArrayList<>();
+    private List<Integer> mengenList                    = new ArrayList<>();
+    private Map<SignableDocument, Signature> signMap    = new HashMap<>();
+    private boolean deliver                             = false;
+    private boolean paused                              = false;
+    private boolean modified                            = false; // NUR für DB-Einträge
 
     public Patient() {}
+
+    private static Map<String, Enum> initTagMap() {
+        Map<String, Enum> map = new HashMap<>();
+        map.putAll(
+            Arrays.stream( PatientField.values() )
+                  .filter( f -> f.getTemplate() != null )
+                  .collect( Collectors.toMap(
+                      f -> f.getTemplate().replace("⚕", ""), // "⚕name⚕" -> "name"
+                      f -> f
+        )));
+        map.putAll(
+            Arrays.stream( SignatureField.values() )
+                  .filter( f -> f.getTemplate() != null )
+                  .collect( Collectors.toMap(
+                      f -> f.getTemplate().replace("⚕", ""), // "⚕name⚕" -> "name"
+                      f -> f
+        )));
+        return map;
+    }
 
     public void setPaused(boolean paused) {
         this.paused = paused;
@@ -93,12 +116,18 @@ public class Patient implements Comparable<Patient>, HasArtikel {
         return comment;
     }
 
-    public BufferedImage getSign(SignableDocument document) {
+    public Signature getSignature(SignableDocument document) {
         return signMap.get(document);
     }
 
-    public void setSign(SignableDocument document, BufferedImage signImage) {
-        signMap.put(document, signImage);
+    public void setSignature(Signature sign) {
+        signMap.put( sign.getDocumentType(), sign );
+        setModified(true);
+    }
+
+    public void setSignatureMap(Map<SignableDocument, Signature> signMap) {
+        this.signMap = signMap;
+        // wird von DBio beim Laden des Patienten aus der Datenbank aufgerufen und setzt daher modified nicht
     }
 
     /**
@@ -341,7 +370,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
             p.set( GEBURTSDATUM,    parseDate( row[5] ));
             p.set( KK_IK,           row[6] == null ? 0 : Integer.valueOf( row[6] ));
             p.set( KV_NUMMER,       row[7] );
-            p.set( TELEFON,         row[8] );
+            p.set( FON,             row[8] );
             p.set( BEFREIUNGSDATUM, parseDate( row[9] ));
         } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
             System.err.println( e.toString() + ": (" + p.getFullName() + ")" );
@@ -514,7 +543,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
         // Sonstige Felder
         p.set( KK_IK,                               rs.getInt(      KK_IK.getDBName()           ));
         p.set( KV_NUMMER,                           rs.getString(   KV_NUMMER.getDBName()       ));
-        p.set( TELEFON,                             rs.getString(   TELEFON.getDBName()         ));
+        p.set( FON,                                 rs.getString(   FON.getDBName()             ));
         p.setComment(                               rs.getString(   KOMMENTAR.getDBName()       ));
         p.set( LIEFERN,                             rs.getBoolean(  LIEFERN.getDBName()         ));
         p.set( PAUSE,                               rs.getBoolean(  PAUSE.getDBName()           ));
@@ -570,12 +599,16 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     }
 
     /**
-     * Sucht basierend auf dem Tag im PatientField-Enum nach dem Wert.
+     * Sucht basierend auf dem Tag im Patient- oder SignatureField-Enum nach dem Wert.
      */
-    private static String getReplacementForTag(String tag, Patient p) {
+    private static String getReplacementForTag(String tag, Patient p) throws NoSuchElementException {
         // Feld suchen, dessen Template-String "⚕" + tag + "⚕" entspricht.
-        PatientField field = TAG_MAP.get(tag);
-        return (field != null) ? p.getFormattedValue(field) : null;
+        Enum field = TAG_MAP.get(tag);
+        if (field != null) {
+            return p.getFormattedValue(field);
+        } else {
+            throw new NoSuchElementException("Tag \"" + tag + "\" unbekannt.");
+        }
     }
 
     /**
@@ -589,29 +622,71 @@ public class Patient implements Comparable<Patient>, HasArtikel {
                   .replace("'", "&apos;");
     }
 
-    public void set(PatientField field, Object value) throws NoSuchElementException {
-        if (value == null) {
+    public void set(Enum field, Object value) throws NoSuchElementException {
+        if (field == null || value == null) {
             return;
         }
-        // wenn es bereits ein String ist, vorhandene Logik nutzen
-        if (value instanceof String) {
-            setValueAsString(field, (String) value);
-            return;
-        }
-        switch (field) {
-            case ID:                id                          = ((Number) value).intValue();              break;
-            case PLZ:               zipCode                     = ((Number) value).intValue();              break;
-            case GEBURTSDATUM:      birthDate                   = (LocalDate)           value;              break;
-            case KK_IK:             healthInsurerIK             = ((Number) value).intValue();              break;
-            case RX_DATUM:          prescriptionDate            = (LocalDate)           value;              break;
-            case ERSTBELIEFERUNG:   firstSupplyDate             = (LocalDate)           value;              break;
-            case ENDE_GENEHMIGUNG:  prescriptionExpiringDate    = (LocalDate)           value;              break;
-            case ENDE_BINDUNG:      bindingExpiringDate         = (LocalDate)           value;              break;
-            case BEFREIUNGSDATUM:   coPaymentFreeUntil          = (LocalDate)           value;              break;
-            case TYP:               type                        = InkoType.fromCode(((Character) value));   break;
-            case LIEFERN:           deliver                     = (Boolean)             value;              break;
-            case PAUSE:             paused                      = (Boolean)             value;              break;
-            default: throw new NoSuchElementException("Feld \"" + field + "\" unbekannt.");
+        if (field instanceof PatientField) {
+            PatientField pField = (PatientField) field;
+            // wenn es bereits ein String ist, vorhandene Logik nutzen
+            if (value instanceof String) {
+                setValueAsString(pField, (String) value);
+                return;
+            }
+            switch (pField) {
+                case ID:                id                          = ((Number) value).intValue();              break;
+                case PLZ:               zipCode                     = ((Number) value).intValue();              break;
+                case GEBURTSDATUM:      birthDate                   = (LocalDate)           value;              break;
+                case KK_IK:             healthInsurerIK             = ((Number) value).intValue();              break;
+                case RX_DATUM:          prescriptionDate            = (LocalDate)           value;              break;
+                case ERSTBELIEFERUNG:   firstSupplyDate             = (LocalDate)           value;              break;
+                case ENDE_GENEHMIGUNG:  prescriptionExpiringDate    = (LocalDate)           value;              break;
+                case ENDE_BINDUNG:      bindingExpiringDate         = (LocalDate)           value;              break;
+                case BEFREIUNGSDATUM:   coPaymentFreeUntil          = (LocalDate)           value;              break;
+                case TYP:               type                        = InkoType.fromCode(((Character) value));   break;
+                case LIEFERN:           deliver                     = (Boolean)             value;              break;
+                case PAUSE:             paused                      = (Boolean)             value;              break;
+                default: throw new NoSuchElementException("Feld \"" + field + "\" unbekannt.");
+            }
+        } else if (field instanceof SignatureField) {
+            if (value instanceof Signature) {
+                setSignature((Signature) value);
+                return;
+            }
+            SignatureField sField = (SignatureField) field;
+            SignableDocument dType;
+            switch (sField) {
+                case SIGN_BERATUNG:     dType = BERATUNG;   break;
+                case SIGN_BINDUNG:      dType = BINDUNG;    break;
+                case SIGN_MEHRKOSTEN:   dType = MEHRKOSTEN; break;
+                case DATE_BERATUNG:     dType = BERATUNG;   break;
+                case DATE_BINDUNG:      dType = BINDUNG;    break;
+                case DATE_MEHRKOSTEN:   dType = MEHRKOSTEN; break;
+                default: throw new NoSuchElementException("Feld \"" + field + "\" unbekannt.");
+            }
+            if (value instanceof BufferedImage) {
+                if ( signMap.containsKey( dType )) {
+                    signMap.get(dType).setSign((BufferedImage) value );
+                } else {
+                    signMap.put( dType, new Signature( dType, (BufferedImage) value, LocalDate.now() ));
+                }
+            } else if (value instanceof LocalDate) {
+                if ( signMap.containsKey( dType )) {
+                    signMap.get(dType).setDate((LocalDate) value);
+                } else {
+                    signMap.put( dType, new Signature( dType, null, (LocalDate) value ));
+                }
+            } else if (value instanceof String) {
+                if ( signMap.containsKey( dType )) {
+                    signMap.get(dType).setDate( LocalDate.parse((CharSequence) value ));
+                } else {
+                    signMap.put( dType, new Signature( dType, null, LocalDate.parse((CharSequence) value )));
+                }
+            } else {
+                throw new NoSuchElementException("Wert vom Typ \"" + value.getClass() + "\" nicht unterstützt.");
+            }
+        } else {
+            throw new NoSuchElementException("Aufzählung/Feld vom Typ \"" + field.getClass() + "\" nicht unterstützt.");
         }
         setModified(true);
     }
@@ -631,7 +706,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
             case GEBURTSDATUM:      birthDate                   = LocalDate.parse(value);                   break;
             case KK_IK:             healthInsurerIK             = Integer.valueOf(value);                   break;
             case KV_NUMMER:         insurenceNumber             = value;                                    break;
-            case TELEFON:           phoneNumber                 = value;                                    break;
+            case FON:               phoneNumber                 = value;                                    break;
             case KOMMENTAR:         comment                     = value;                                    break;
             case RX_DATUM:          prescriptionDate            = LocalDate.parse(value);                   break;
             case ERSTBELIEFERUNG:   firstSupplyDate             = LocalDate.parse(value);                   break;
@@ -648,19 +723,17 @@ public class Patient implements Comparable<Patient>, HasArtikel {
         setModified(true);
     }
 
-    public String getValue(PatientField field) {
-        return get(field).toString();
-    }
-
-    public String getFormattedValue(PatientField field) {
+    public String getFormattedValue(Enum field) throws NoSuchElementException {
         Object obj = get(field);
-        switch (field) {
-            case BEFREIUNGSDATUM:
-                if ( isCoPaymentFree() ) {
-                    return "frei bis " + ((ChronoLocalDate) obj).format(DEFAULT_FORMATTER);
-                } else {
-                    return "zuzahlungspflichtig";
-                }
+        if (field instanceof PatientField) {
+            switch ((PatientField) field) {
+                case BEFREIUNGSDATUM:
+                    if ( isCoPaymentFree() ) {
+                        return "frei bis " + ((ChronoLocalDate) obj).format(DEFAULT_FORMATTER);
+                    } else {
+                        return "zuzahlungspflichtig";
+                    }
+            }
         }
         if (obj instanceof LocalDate) {
             return ((ChronoLocalDate) obj).format(DEFAULT_FORMATTER);
@@ -668,36 +741,52 @@ public class Patient implements Comparable<Patient>, HasArtikel {
         return getValue(field);
     }
 
-    public Object get(PatientField field) {
-        switch (field) {
-            case ID:                return id;
-            case FAMILIENNAME:      return lastName;
-            case VORNAME:           return firstName;
-            case STRASSE:           return street;
-            case PLZ:               return zipCode;
-            case ORT:               return city;
-            case GEBURTSDATUM:      return birthDate;
-            case KK_IK:             return healthInsurerIK;
-            case KV_NUMMER:         return insurenceNumber;
-            case TELEFON:           return phoneNumber;
-            case KOMMENTAR:         return comment;
-            case RX_DATUM:          return prescriptionDate;
-            case ERSTBELIEFERUNG:   return firstSupplyDate;
-            case ENDE_GENEHMIGUNG:  return prescriptionExpiringDate;
-            case ENDE_BINDUNG:      return bindingExpiringDate;
-            case LIEFERN:           return deliver;
-            case PAUSE:             return paused;
-            case BEFREIUNGSDATUM:   return coPaymentFreeUntil;
-            case TYP:               return type.getCode();
-            case MENGENLISTE:       return getRawMengenList();
-            case ARTIKELLISTE:      return getRawArtikelList();
-            case BESONDERHEITEN:    return getBesonderheiten();
-            case ACTK:              return getACTK();
-            case KK_NAME:           return getHealthInsurer();
-            case TYPE_LABEL:        return type.getLabel();
-            case HIMI:              return getArtikelListAsString();
-            default:                return null;
+    public String getValue(Enum field) throws NoSuchElementException {
+        return get(field).toString();
+    }
+
+    public Object get(Enum field) throws NoSuchElementException {
+        if (field instanceof PatientField) {
+            switch ((PatientField) field) {
+                case ID:                return id;
+                case FAMILIENNAME:      return lastName;
+                case VORNAME:           return firstName;
+                case STRASSE:           return street;
+                case PLZ:               return zipCode;
+                case ORT:               return city;
+                case GEBURTSDATUM:      return birthDate;
+                case KK_IK:             return healthInsurerIK;
+                case KV_NUMMER:         return insurenceNumber;
+                case FON:               return phoneNumber;
+                case KOMMENTAR:         return comment;
+                case RX_DATUM:          return prescriptionDate;
+                case ERSTBELIEFERUNG:   return firstSupplyDate;
+                case ENDE_GENEHMIGUNG:  return prescriptionExpiringDate;
+                case ENDE_BINDUNG:      return bindingExpiringDate;
+                case LIEFERN:           return deliver;
+                case PAUSE:             return paused;
+                case BEFREIUNGSDATUM:   return coPaymentFreeUntil;
+                case TYP:               return type.getCode();
+                case MENGENLISTE:       return getRawMengenList();
+                case ARTIKELLISTE:      return getRawArtikelList();
+                case BESONDERHEITEN:    return getBesonderheiten();
+                case ACTK:              return getACTK();
+                case KK_NAME:           return getHealthInsurer();
+                case TYPE_LABEL:        return type.getLabel();
+                case HIMI:              return getArtikelListAsString();
+            }
         }
+        if (field instanceof SignatureField) {
+            switch ((SignatureField) field) {
+                case SIGN_BERATUNG:     return getSignature(SignableDocument.BERATUNG).getSign();
+                case DATE_BERATUNG:     return getSignature(SignableDocument.BERATUNG).getDate();
+                case SIGN_BINDUNG:      return getSignature(SignableDocument.BINDUNG).getSign();
+                case DATE_BINDUNG:      return getSignature(SignableDocument.BINDUNG).getDate();
+                case SIGN_MEHRKOSTEN:   return getSignature(SignableDocument.MEHRKOSTEN).getSign();
+                case DATE_MEHRKOSTEN:   return getSignature(SignableDocument.MEHRKOSTEN).getDate();
+            }
+        }
+        throw new NoSuchElementException("Aufzählung/Feld \"" + field + "\" nicht unterstützt.");
     }
 
 }

@@ -7,7 +7,7 @@ package inko.old;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.1
+ * @version 1.0.2
  *
  */
 
@@ -19,6 +19,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -53,7 +54,7 @@ public class OldMainFrame extends inko.MainFrame {
 
     @Override
     protected inko.DBio getDBio() {
-        return new DBio( server, inko.DBio.DEFAULT_PORT, new net.Login( user, pass ));
+        return new DBio( server, inko.DBio.DEFAULT_PORT, new net.Login( user, Arrays.toString( pass )));
     }
 
     @Override

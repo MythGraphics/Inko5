@@ -19,16 +19,16 @@ public enum SignableDocument {
     BINDUNG(SIGN_BINDUNG, DATE_BINDUNG),
     MEHRKOSTEN(SIGN_MEHRKOSTEN, DATE_MEHRKOSTEN);
 
-    private final SignatureField fieldImg;
+    private final SignatureField fieldSign;
     private final SignatureField fieldDate;
 
-    SignableDocument(SignatureField fieldImg, SignatureField fieldDate) {
-        this.fieldImg  = fieldImg;
+    SignableDocument(SignatureField fieldSign, SignatureField fieldDate) {
+        this.fieldSign = fieldSign;
         this.fieldDate = fieldDate;
     }
 
-    public SignatureField getImgField() {
-        return fieldImg;
+    public SignatureField getSignField() {
+        return fieldSign;
     }
 
     public SignatureField getDateField() {

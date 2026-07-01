@@ -18,11 +18,11 @@ public enum SignatureField {
 
     PATIENT_ID("p_id", "int unsigned not null", Integer.class, null),
     SIGN_BERATUNG("UnterschriftBeratung", "mediumblob", BufferedImage.class, "⚕sign_beratung⚕"),
-    DATE_BERATUNG("UpdateBeratung", "date", LocalDate.class, "⚕date_beratung⚕"),
+    DATE_BERATUNG("DatumBeratung", "date", LocalDate.class, "⚕date_beratung⚕"),
     SIGN_BINDUNG("UnterschriftBindung", "mediumblob", BufferedImage.class, "⚕sign_bindung⚕"),
-    DATE_BINDUNG("UpdateBindung", "date", LocalDate.class, "⚕date_bindung⚕"),
+    DATE_BINDUNG("DatumBindung", "date", LocalDate.class, "⚕date_bindung⚕"),
     SIGN_MEHRKOSTEN("UnterschriftMehrkosten", "mediumblob", BufferedImage.class, "⚕sign_mehrkosten⚕"),
-    DATE_MEHRKOSTEN("UpdateMehrkosten", "date", LocalDate.class, "⚕date_mehrkosten⚕");
+    DATE_MEHRKOSTEN("DatumMehrkosten", "date", LocalDate.class, "⚕date_mehrkosten⚕");
 
     private final String dbName;
     private final String dbType;

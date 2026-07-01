@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.*;
+import static java.sql.Types.BLOB;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,8 +29,8 @@ public class DBio extends SQLConnection {
     public final static String TABLE_ARTIKEL    = "artikel";
     public final static String TABLE_SIGNATURE  = "signature";
     public final static String TABLE_APP        = "inkoapp";
-    public final static String[] SQL_APP_FIELD  = {"orte", "artikelpass"};
-    public final static String[] SQL_APP_TYPE   = {"text", "text"};
+    public final static String[] SQL_APP_FIELD  = {"orte", "artikelpass", "sign_apo"};
+    public final static String[] SQL_APP_TYPE   = {"text", "text", "mediumblob"};
 
     private List<Artikel> artikelCache;
 
@@ -196,7 +197,7 @@ public class DBio extends SQLConnection {
     public Patient loadPatient(ResultSet rs) throws SQLException {
         // siehe Patient.fromResultSet
         Patient p = new Patient();
-        for ( PatientField field : DB_FIELDS ) {
+        for (PatientField field : DB_FIELDS) {
             String colName = field.getDBName();
             // prüfen, ob die Spalte überhaupt im ResultSet vorhanden ist
             Object value = rs.getObject(colName);
@@ -205,14 +206,14 @@ public class DBio extends SQLConnection {
             }
             // Typsichere Konvertierung
             if (value instanceof Date) {
-                // Konvertierung: SQL Date -> LocalDate
-                p.set( field, (( Date ) value ).toLocalDate() );
+                p.set( field, ((Date) value).toLocalDate() );
             }
             else {
                 p.set(field, value);
             }
         }
         p.setId( rs.getInt( ID.getDBName() ));
+        p.setSignatureMap( getSignatureMap( p ));
         p.buildArtikelList(artikelCache);
         p.setModified(false);
         return p;
@@ -403,15 +404,41 @@ public class DBio extends SQLConnection {
         return false;
     }
 
-    public Map<SignableDocument, BufferedImage> getSignatureMap(int patientId) {
-        Map<SignableDocument, BufferedImage> map = new HashMap<>();
+    public BufferedImage getApoSign() {
+        String sql = "SELECT " + SQL_APP_FIELD[2] + " FROM " + TABLE_APP;
+        try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
+            try ( ResultSet rs = pstmt.executeQuery() ) {
+                return SignatureServer.convertBytesToImage( rs.getBytes( 3 ));
+            }
+        } catch (SQLException e) {
+            exHandling(e);
+        } catch (IOException e) {
+            System.err.println( "Message: " + e.getMessage() );
+        }
+        return null;
+    }
+
+    public Map<SignableDocument, Signature> getSignatureMap(Patient p) {
+        Map<SignableDocument, Signature> map = new HashMap<>();
         String sql = "SELECT * FROM " + TABLE_SIGNATURE + " WHERE id = ?";
         try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
-            pstmt.setInt(1, patientId);
+            SignableDocument type;
+            BufferedImage img;
+            LocalDate date;
+            pstmt.setInt( 1, p.getId() );
             try ( ResultSet rs = pstmt.executeQuery() ) {
-                mapImg( rs.getBytes(2), map );
-                mapImg( rs.getBytes(4), map );
-                mapImg( rs.getBytes(6), map );
+                type = SignableDocument.values()[0];
+                img  = SignatureServer.convertBytesToImage( rs.getBytes( 2 ));
+                date = rs.getDate(3).toLocalDate();
+                map.put( type, new Signature( type, img, date ));
+                type = SignableDocument.values()[1];
+                img  = SignatureServer.convertBytesToImage( rs.getBytes( 4 ));
+                date = rs.getDate(5).toLocalDate();
+                map.put( type, new Signature( type, img, date ));
+                type = SignableDocument.values()[2];
+                img  = SignatureServer.convertBytesToImage( rs.getBytes( 6 ));
+                date = rs.getDate(7).toLocalDate();
+                map.put( type, new Signature( type, img, date ));
             }
         } catch (SQLException e) {
             exHandling(e);
@@ -421,25 +448,18 @@ public class DBio extends SQLConnection {
         return map;
     }
 
-    private void mapImg(byte[] imageBytes, Map<SignableDocument, BufferedImage> map) throws IOException {
-        if (imageBytes != null && imageBytes.length > 0) {
-            BufferedImage sign = SignatureServer.convertBytesToImage(imageBytes);
-            map.put(SignableDocument.BERATUNG, sign);
-        }
-    }
-
-    public void updateSignature(int patientId, BufferedImage sign, SignableDocument document) {
+    public void updateSignature(Patient p, Signature sign) {
         String sql = "REPLACE INTO " + TABLE_SIGNATURE + " (" +
                      SignatureField.PATIENT_ID.getDBName() + ", " +
-                     document.getImgField().getDBName() + ", " +
-                     document.getDateField().getDBName() +
+                     sign.getDocumentType().getSignField().getDBName() + ", " +
+                     sign.getDocumentType().getDateField().getDBName() +
                      ") VALUES (?, ?, ?)";
         System.out.println(sql); // debug
-        if (sign == null) {
+        if ( sign.getSign() == null ) {
             try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
-                pstmt.setInt(  1, patientId );
-                pstmt.setNull( 2, java.sql.Types.BLOB );
-                pstmt.setDate( 3, Date.valueOf( LocalDate.now() ));
+                pstmt.setInt(  1, p.getId() );
+                pstmt.setNull( 2, BLOB );
+                pstmt.setDate( 3, Date.valueOf( sign.getDate() ));
                 pstmt.executeUpdate();
             } catch (SQLException e) {
                 exHandling(e);
@@ -447,14 +467,14 @@ public class DBio extends SQLConnection {
         } else {
             try ( ByteArrayOutputStream out = new ByteArrayOutputStream() ) {
                 // BufferedImage zurück in komprimierte PNG-Bytes wandeln
-                ImageIO.write(sign, "png", out);
+                ImageIO.write( sign.getSign(), "png", out );
                 byte[] imageBytes = out.toByteArray();
 
                 try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
-                    pstmt.setInt( 1, patientId );
+                    pstmt.setInt(          1, p.getId() );
                     // ByteArrayInputStream übergibt die Bytes direkt an das BLOB-Feld
                     pstmt.setBinaryStream( 2, new ByteArrayInputStream( imageBytes ), imageBytes.length );
-                    pstmt.setDate( 3, Date.valueOf( LocalDate.now() ));
+                    pstmt.setDate(         3, Date.valueOf( sign.getDate() ));
                     pstmt.executeUpdate();
                 }
             } catch (SQLException e) {
@@ -545,6 +565,39 @@ public class DBio extends SQLConnection {
             firstRun_Artikel(io);
             firstRun_Signature(io);
             firstRun_Patienten(io);
+        }
+    }
+
+    static void updateDB(String user, char[] pass, String server) {
+        try ( SQLConnection con = new SQLConnection(
+            server, SQLConnection.DEFAULT_PORT, new Login( user, new String( pass )), null
+        )) {
+            con.connect();
+            DatabaseMetaData metaData = con.getConnection().getMetaData();
+            ResultSet columns = metaData.getColumns(null, null, TABLE_PATIENT, null);
+            List<PatientField> dbFields = PatientField.DB_FIELDS;
+            Statement stmt = con.getConnection().createStatement();
+            columns.next(); // erste Spalte überspringen (primary key)
+            // index 0 überspringen (primary key)
+            for (int index = 1; columns.next() && index < dbFields.size(); ++index) {
+                String oldColumnName = columns.getString("COLUMN_NAME");
+                PatientField targetField = dbFields.get(index);
+
+                // SQL-Befehl für diese Spalte bauen
+                String sql = String.format(
+                    "ALTER TABLE %s CHANGE `%s` `%s` %s",
+                    TABLE_PATIENT,
+                    oldColumnName,
+                    targetField.getDBName(),
+                    targetField.getDBType()
+                );
+
+                System.out.println(sql);
+                System.out.println( oldColumnName + " -> " + targetField.getDBName() );
+                // stmt.execute(sql); // Zum Ausführen auskommentieren
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

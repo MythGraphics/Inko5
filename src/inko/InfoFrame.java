@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.2
+ * @version 1.0.3
  *
  */
 
@@ -84,7 +84,7 @@ public class InfoFrame extends JFrame implements HasPatient {
     }// </editor-fold>//GEN-END:initComponents
 
     private void initMoreComponents() {
-        pio = new DBio( server, DBio.DEFAULT_PORT, new net.Login( MainFrame.user, MainFrame.pass ));
+        pio = new DBio( server, DBio.DEFAULT_PORT, new net.Login( MainFrame.user, Arrays.toString( MainFrame.pass )));
         if ( !pio.connect() ) {
             System.err.println("Datenbank antwortet nicht!");
             int x = this.getContentPane().getComponentCount();

@@ -53,7 +53,7 @@ public class MainFrame extends JFrame {
 
     protected static String server      = "localhost";
     protected static String user        = "mythg";
-    protected static String pass        = "";
+    protected static char[] pass        = "".toCharArray();
 
     protected DBio pio;
     protected PatientTableModel patientTableModel;
@@ -83,18 +83,19 @@ public class MainFrame extends JFrame {
 
     private static void printHelp() {
         System.out.println("Parameter:");
-        System.out.println("  --7z[path]     Pfad zur 7z.exe");
-        System.out.println("  --oo[path]     Pfad zur soffice.exe (OpenOffice)");
-        System.out.println("  --server       DB server an Port " + SQLConnection.DEFAULT_PORT);
-        System.out.println("                 (Port nicht änderbar)");
-        System.out.println("  --firststart   legt die Datenbank-Struktur an");
-        System.out.println("  --user         Benutzernamen für die Datenbank");
-        System.out.println("  --pass         Passwort für die Datenbank");
-        System.out.println("  --info         Zeigt den InfoFrame an");
-        System.out.println("  --gui          Zeigt den MainFrame an");
-        System.out.println("  --old_db_gui   Zeigt den MainFrame für die \"alte\" DB an");
-        System.out.println("  --help         zeigt diese Hilfe");
-        System.out.println("  --version      zeigt Programm-Version");
+        System.out.println("  --7z[path]    Pfad zur 7z.exe");
+        System.out.println("  --oo[path]    Pfad zur soffice.exe (OpenOffice)");
+        System.out.println("  --server      DB server an Port " + SQLConnection.DEFAULT_PORT);
+        System.out.println("                (Port nicht änderbar)");
+        System.out.println("  --firststart  legt die Datenbank-Struktur an");
+        System.out.println("  --updateDB    aktualisiert die Datenbank auf diese Programmversion");
+        System.out.println("  --user        Benutzernamen für die Datenbank");
+        System.out.println("  --pass        Passwort für die Datenbank");
+        System.out.println("  --info        Zeigt den InfoFrame an");
+        System.out.println("  --gui         Zeigt den MainFrame an");
+        System.out.println("  --old_db_gui  Zeigt den MainFrame für die \"alte\" DB an");
+        System.out.println("  --help        zeigt diese Hilfe");
+        System.out.println("  --version     zeigt Programm-Version");
         System.out.println();
     }
 
@@ -952,7 +953,7 @@ public class MainFrame extends JFrame {
                 user = args[i].substring(6);
             }
             else if ( args[i].startsWith( "--pass" )) {
-                pass = args[i].substring(6);
+                pass = args[i].substring(6).toCharArray();
             }
             else if ( args[i].equals( "--firststart" )) {
                 String user;
@@ -968,6 +969,11 @@ public class MainFrame extends JFrame {
                 DBio.firstRun(user, pass, server);
                 System.out.println("... abgeschlossen.");
                 return;
+            }
+            else if ( args[i].startsWith( "--updateDB" )) {
+                System.out.println("Starte Update der Datenbank ...");
+                DBio.updateDB(user, pass, server);
+                System.out.println("... abgeschlossen.");
             }
             else if ( args[i].startsWith( "--info" )) {
                 InfoFrame.main( new String[]{server} );
@@ -1024,17 +1030,17 @@ public class MainFrame extends JFrame {
         setTypeUI();
         typeChangeActionPerformed();
 
-        if ( patient.getSign( BERATUNG ) != null ) {
+        if ( patient.getSignature( BERATUNG ) != null ) {
             BeratungsbogenButton.setBackground(GREEN);
         } else {
             BeratungsbogenButton.setBackground(RED);
         }
-        if ( patient.getSign( BINDUNG ) != null ) {
+        if ( patient.getSignature( BINDUNG ) != null ) {
             BindungserklärungButton.setBackground(GREEN);
         } else {
             BindungserklärungButton.setBackground(RED);
         }
-        if ( patient.getSign( MEHRKOSTEN ) != null ) {
+        if ( patient.getSignature( MEHRKOSTEN ) != null ) {
             MehrkostenerklärungButton.setBackground(GREEN);
         } else {
             MehrkostenerklärungButton.setBackground(RED);
@@ -1527,14 +1533,12 @@ public class MainFrame extends JFrame {
         String localIp = getLocalIpAddress();
         String url = "http://" + localIp + ":" + SignatureServer.PORT +
                      "/signature?patientId=" + patientId + "?document=" + document;
-        System.out.println(url); // debug
-
+        System.out.println("Signatur-URL: " + url); // debug
         try {
             BufferedImage qrCodeImage = generateQRCodeImage(url, 300, 300);
             EventQueue.invokeLater( () -> {
                 JLabel qrLabel = new JLabel( new ImageIcon( qrCodeImage ));
-
-                // in einem eigenen JDialog anzeigen
+                // im eigenen JDialog anzeigen
                 JOptionPane.showMessageDialog(
                     this,
                     qrLabel,
@@ -1544,7 +1548,7 @@ public class MainFrame extends JFrame {
             });
         } catch (WriterException e) {
             e.printStackTrace();
-            statusField.showError("Fehler beim Generieren des QR-Codes.");
+            statusField.showError("Generieren des QR-Codes fehlgeschlagen.");
         }
     }
 
@@ -1613,7 +1617,7 @@ public class MainFrame extends JFrame {
                             " " +
                             patientComboBox.getSelectedItem() +
                             ".odt";
-        new DocumentWorker(template, newODTname, patientTableModel.getPatient(), this).execute();
+        new DocumentWorker( template, newODTname, patientTableModel.getPatient(), this ).execute();
     }
 
     protected static void showGUI(JFrame guiFrame) {
@@ -1627,7 +1631,7 @@ public class MainFrame extends JFrame {
     }
 
     protected DBio getDBio() {
-        return new DBio( server, DBio.DEFAULT_PORT, new net.Login( user, pass ));
+        return new DBio( server, DBio.DEFAULT_PORT, new net.Login( user, Arrays.toString( pass )));
     }
 
     final void initDBCon() {
