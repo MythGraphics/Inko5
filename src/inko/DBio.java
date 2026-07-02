@@ -57,10 +57,9 @@ public class DBio extends SQLConnection {
 
     public ArrayList<String> getOrte() {
         String sql = "SELECT " + SQL_APP_FIELD[0] + " FROM " + TABLE_APP;
-        try (
-            Statement stmt = getConnection().createStatement();
-            ResultSet result = stmt.executeQuery(sql)
-        ) {
+        try ( Statement stmt = getConnection().createStatement();
+              ResultSet result = stmt.executeQuery(sql)
+            ) {
             if ( result.next() ) {
                 return parseString( result.getString( SQL_APP_FIELD[0] ));
             }
@@ -72,10 +71,9 @@ public class DBio extends SQLConnection {
 
     public char[] getArtikelPasswordHash() {
         String sql = "SELECT " + SQL_APP_FIELD[1] + " FROM " + TABLE_APP;
-        try (
-            Statement stmt = getConnection().createStatement();
-            ResultSet result = stmt.executeQuery(sql)
-        ) {
+        try ( Statement stmt = getConnection().createStatement();
+              ResultSet result = stmt.executeQuery(sql)
+            ) {
             if ( result.next() ) {
                 return result.getString( SQL_APP_FIELD[1] ).toCharArray();
             }
@@ -266,8 +264,9 @@ public class DBio extends SQLConnection {
         }
         String sql = "SELECT * FROM " + TABLE_ARTIKEL + " ORDER BY " + ArtikelField.NAME.getDBName() + " ASC";
         ArrayList<Artikel> list = new ArrayList<>();
-        try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
-            ResultSet rs = pstmt.executeQuery();
+        try ( PreparedStatement pstmt = getConnection().prepareStatement(sql);
+              ResultSet rs = pstmt.executeQuery();
+            ) {
             while ( rs.next() ) {
                 Artikel artikel = new Artikel();
                 for ( ArtikelField field : ArtikelField.values() ) {
@@ -287,8 +286,9 @@ public class DBio extends SQLConnection {
                      FAMILIENNAME.getDBName() + " ASC, " +
                      VORNAME.getDBName() + " ASC";
         ArrayList<Patient> list = new ArrayList<>();
-        try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
-            ResultSet rs = pstmt.executeQuery();
+        try ( PreparedStatement pstmt = getConnection().prepareStatement(sql);
+              ResultSet rs = pstmt.executeQuery();
+            ) {
             if ( rs == null ) {
                 return list;
             }
@@ -309,8 +309,9 @@ public class DBio extends SQLConnection {
             FAMILIENNAME.getDBName() + "," +
             VORNAME.getDBName() + " " +
             "FROM " + TABLE_PATIENT;
-        try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
-            ResultSet rs = pstmt.executeQuery();
+        try ( PreparedStatement pstmt = getConnection().prepareStatement(sql);
+              ResultSet rs = pstmt.executeQuery();
+            ) {
             while ( rs.next() ) {
                 model.addElement( rs.getString( 1 ) + ", " + rs.getString( 2 ));
             }
@@ -406,9 +407,11 @@ public class DBio extends SQLConnection {
 
     public BufferedImage getApoSign() {
         String sql = "SELECT " + SQL_APP_FIELD[2] + " FROM " + TABLE_APP;
-        try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
-            try ( ResultSet rs = pstmt.executeQuery() ) {
-                return SignatureServer.convertBytesToImage( rs.getBytes( 3 ));
+        try ( PreparedStatement pstmt = getConnection().prepareStatement(sql);
+              ResultSet rs = pstmt.executeQuery();
+            ) {
+            if ( rs.next() ) {
+                return SignatureServer.convertBytesToImage( rs.getBytes( SQL_APP_FIELD[2] ));
             }
         } catch (SQLException e) {
             exHandling(e);
@@ -420,30 +423,34 @@ public class DBio extends SQLConnection {
 
     public Map<SignableDocument, Signature> getSignatureMap(Patient p) {
         Map<SignableDocument, Signature> map = new HashMap<>();
-        String sql = "SELECT * FROM " + TABLE_SIGNATURE + " WHERE id = ?";
+        String sql = "SELECT * FROM " + TABLE_SIGNATURE + " WHERE p_id = ?";
         try ( PreparedStatement pstmt = getConnection().prepareStatement( sql )) {
             SignableDocument type;
             BufferedImage img;
-            LocalDate date;
+            Date date;
             pstmt.setInt( 1, p.getId() );
             try ( ResultSet rs = pstmt.executeQuery() ) {
-                type = SignableDocument.values()[0];
-                img  = SignatureServer.convertBytesToImage( rs.getBytes( 2 ));
-                date = rs.getDate(3).toLocalDate();
-                map.put( type, new Signature( type, img, date ));
-                type = SignableDocument.values()[1];
-                img  = SignatureServer.convertBytesToImage( rs.getBytes( 4 ));
-                date = rs.getDate(5).toLocalDate();
-                map.put( type, new Signature( type, img, date ));
-                type = SignableDocument.values()[2];
-                img  = SignatureServer.convertBytesToImage( rs.getBytes( 6 ));
-                date = rs.getDate(7).toLocalDate();
-                map.put( type, new Signature( type, img, date ));
+                if ( rs.next() ) {
+                    type = SignableDocument.values()[0];
+                    img  = SignatureServer.convertBytesToImage( rs.getBytes( 2 ));
+                    date = rs.getDate(3);
+                    map.put( type, new Signature( type, img, date ));
+
+                    type = SignableDocument.values()[1];
+                    img  = SignatureServer.convertBytesToImage( rs.getBytes( 4 ));
+                    date = rs.getDate(5);
+                    map.put( type, new Signature( type, img, date ));
+
+                    type = SignableDocument.values()[2];
+                    img  = SignatureServer.convertBytesToImage( rs.getBytes( 6 ));
+                    date = rs.getDate(7);
+                    map.put( type, new Signature( type, img, date ));
+                }
             }
         } catch (SQLException e) {
             exHandling(e);
         } catch (IOException e) {
-            System.err.println( "Message: " + e.getMessage() );
+            System.err.println( e.getMessage() );
         }
         return map;
     }

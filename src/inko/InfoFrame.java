@@ -84,7 +84,7 @@ public class InfoFrame extends JFrame implements HasPatient {
     }// </editor-fold>//GEN-END:initComponents
 
     private void initMoreComponents() {
-        pio = new DBio( server, DBio.DEFAULT_PORT, new net.Login( MainFrame.user, Arrays.toString( MainFrame.pass )));
+        pio = new DBio( server, DBio.DEFAULT_PORT, new net.Login( MainFrame.user, MainFrame.pass ));
         if ( !pio.connect() ) {
             System.err.println("Datenbank antwortet nicht!");
             int x = this.getContentPane().getComponentCount();

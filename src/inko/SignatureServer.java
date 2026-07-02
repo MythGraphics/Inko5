@@ -32,6 +32,9 @@ public class SignatureServer {
     private SignatureServer() {}
 
     public static BufferedImage convertBytesToImage(byte[] imageBytes) throws IOException {
+        if (imageBytes == null || imageBytes.length == 0) {
+            return null;
+        }
         try ( ByteArrayInputStream in = new ByteArrayInputStream( imageBytes )) {
             return ImageIO.read(in);
         }

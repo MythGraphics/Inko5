@@ -7,7 +7,7 @@ package inko;
 /**
  *
  * @author  Martin Pröhl alias MythGraphics
- * @version 1.0.3
+ * @version 1.0.4
  *
  */
 
@@ -59,7 +59,7 @@ public class SQLConnection implements Closeable {
 
     public boolean connect() {
         try {
-            con = DriverManager.getConnection( url, login.getUser(), login.getPass() );
+            con = DriverManager.getConnection( url, login.getUser(), String.valueOf( login.getPass() ));
             statement = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE );
             if ( db != null) {
                 write( "use " + db + ";" );

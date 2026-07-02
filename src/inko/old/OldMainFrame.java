@@ -54,7 +54,7 @@ public class OldMainFrame extends inko.MainFrame {
 
     @Override
     protected inko.DBio getDBio() {
-        return new DBio( server, inko.DBio.DEFAULT_PORT, new net.Login( user, Arrays.toString( pass )));
+        return new DBio( server, inko.DBio.DEFAULT_PORT, new net.Login( user, pass ));
     }
 
     @Override

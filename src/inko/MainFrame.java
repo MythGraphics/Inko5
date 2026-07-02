@@ -53,7 +53,7 @@ public class MainFrame extends JFrame {
 
     protected static String server      = "localhost";
     protected static String user        = "mythg";
-    protected static char[] pass        = "".toCharArray();
+    protected static char[] pass        = new char[0];
 
     protected DBio pio;
     protected PatientTableModel patientTableModel;
@@ -1030,20 +1030,22 @@ public class MainFrame extends JFrame {
         setTypeUI();
         typeChangeActionPerformed();
 
-        if ( patient.getSignature( BERATUNG ) != null ) {
-            BeratungsbogenButton.setBackground(GREEN);
-        } else {
-            BeratungsbogenButton.setBackground(RED);
-        }
-        if ( patient.getSignature( BINDUNG ) != null ) {
-            BindungserklärungButton.setBackground(GREEN);
-        } else {
-            BindungserklärungButton.setBackground(RED);
-        }
-        if ( patient.getSignature( MEHRKOSTEN ) != null ) {
-            MehrkostenerklärungButton.setBackground(GREEN);
-        } else {
-            MehrkostenerklärungButton.setBackground(RED);
+        if ( patient.hasSignatureData() ) {
+            if ( patient.getSignature( BERATUNG ).getSign() != null ) {
+                BeratungsbogenButton.setBackground(GREEN);
+            } else {
+                BeratungsbogenButton.setBackground(RED);
+            }
+            if ( patient.getSignature( BINDUNG ).getSign() != null ) {
+                BindungserklärungButton.setBackground(GREEN);
+            } else {
+                BindungserklärungButton.setBackground(RED);
+            }
+            if ( patient.getSignature( MEHRKOSTEN ).getSign() != null ) {
+                MehrkostenerklärungButton.setBackground(GREEN);
+            } else {
+                MehrkostenerklärungButton.setBackground(RED);
+            }
         }
 
         refreshArtikelComboBox();
@@ -1597,18 +1599,18 @@ public class MainFrame extends JFrame {
     }
 
     private void typeChangeActionPerformed() {
-        Patient p = patientTableModel.getPatient();
+        Patient patient = patientTableModel.getPatient();
         if ( aRadioButton.isSelected() ) {
-            p.setType(ABLEITEND);
+            patient.setType(ABLEITEND);
         }
         else if ( sRadioButton.isSelected() ) {
-            p.setType(SAUGEND);
+            patient.setType(SAUGEND);
         }
         else if ( kRadioButton.isSelected() ) {
-            p.setType(SAUGEND_KIND);
+            patient.setType(SAUGEND_KIND);
         }
-        insurenceTextField.setText( p.getHealthInsurer() );
-        insurenceInfo = p.getBesonderheiten();
+        insurenceTextField.setText( patient.getHealthInsurer() );
+        insurenceInfo = patient.getBesonderheiten();
     }
 
     public void processTemplate(String template) {
@@ -1631,7 +1633,7 @@ public class MainFrame extends JFrame {
     }
 
     protected DBio getDBio() {
-        return new DBio( server, DBio.DEFAULT_PORT, new net.Login( user, Arrays.toString( pass )));
+        return new DBio( server, DBio.DEFAULT_PORT, new net.Login( user, pass ));
     }
 
     final void initDBCon() {
@@ -1639,7 +1641,7 @@ public class MainFrame extends JFrame {
             pio.close();
         }
         pio = getDBio();
-        if ( pio.connect() ) {
+        if ( pio != null && pio.connect() ) {
             ArrayList<String> list = pio.getOrte();
             if ( list != null && !list.isEmpty() ) {
                 Location.ORTE = list; // nicht schön, aber funzt!
@@ -1833,21 +1835,28 @@ public class MainFrame extends JFrame {
 
         // diverse Listener hinzufügen
         jComboBox.addActionListener( e -> {
-            // wird von ENTER ausgelöst
-            if ( "comboBoxEdited".equals( e.getActionCommand() )) {
-                /* Wenn die ComboBox editierbar ist, gibt getSelectedItem() oft nur einen String
-                 * (den getippten Text) zurück, statt des Patient-Objekts. Um das zu beheben,
-                 * fügen wir eine Logik ein, die beim Drücken von Enter das richtige Objekt auswählt:
-                 */
-                Object selected = jComboBox.getSelectedItem();
-                if (selected instanceof Patient) {
-                    Patient p = (Patient) selected;
-                    for (HasPatient u : user) {
-                        u.setPatient(p);
-                    }
+            /* Wenn die ComboBox editierbar ist, gibt getSelectedItem() oft nur einen String
+             * (den getippten Text) zurück, statt des Patient-Objekts. Um das zu beheben,
+             * fügen wir eine Logik ein, die beim Drücken von Enter das richtige Objekt auswählt:
+             */
+            Object selected = jComboBox.getSelectedItem();
+            if (selected instanceof Patient) {
+                Patient p = (Patient) selected;
+                for (HasPatient u : user) {
+                    u.setPatient(p);
                 }
+            }
+
+            // wird von ENTER ausgelöst
+            if ( e.getActionCommand().equals( "comboBoxEdited" )) {
                 String text = editor.getText();
-                patientComboBoxModel.filter(text); // Model filtern
+                patientComboBoxModel.filter(text);
+                SwingUtilities.invokeLater( () -> {
+                    Object firstMatch = patientComboBoxModel.getSelectedItem();
+                    if (firstMatch != null) {
+                        jComboBox.setSelectedItem(firstMatch);
+                    }
+                });
             }
         });
         editor.addMouseListener( new MouseAdapter() {

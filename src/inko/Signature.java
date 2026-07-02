@@ -12,6 +12,7 @@ package inko;
  */
 
 import java.awt.image.BufferedImage;
+import java.sql.Date;
 import java.time.LocalDate;
 
 public class Signature {
@@ -30,6 +31,12 @@ public class Signature {
         this.documentType = documentType;
         this.sign = sign;
         this.date = date == null ? LocalDate.now() : date;
+    }
+
+    public Signature(SignableDocument documentType, BufferedImage sign, Date date) {
+        this.documentType = documentType;
+        this.sign = sign;
+        this.date = date == null ? LocalDate.now() : date.toLocalDate();
     }
 
     public SignableDocument getDocumentType() {

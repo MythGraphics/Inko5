@@ -13,8 +13,8 @@ package inko;
 
 import static inko.InkoType.SAUGEND;
 import static inko.PatientField.*;
-import static inko.SignatureField.*;
 import static inko.SignableDocument.*;
+import static inko.SignatureField.*;
 import java.awt.image.BufferedImage;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -72,7 +72,7 @@ public class Patient implements Comparable<Patient>, HasArtikel {
     private boolean modified                            = false; // NUR für DB-Einträge
 
     public Patient() {}
-
+    
     private static Map<String, Enum> initTagMap() {
         Map<String, Enum> map = new HashMap<>();
         map.putAll(
@@ -114,6 +114,10 @@ public class Patient implements Comparable<Patient>, HasArtikel {
 
     public String getComment() {
         return comment;
+    }
+
+    public boolean hasSignatureData() {
+        return signMap != null && !signMap.isEmpty();
     }
 
     public Signature getSignature(SignableDocument document) {

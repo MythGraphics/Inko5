@@ -17,21 +17,21 @@ import javax.swing.JComboBox;
 
 public class PatientComboBoxModel extends DefaultComboBoxModel<Patient> {
 
-    private List<Patient> patsBackup; // Backup der kompletten Liste
+    private List<Patient> patients; // Backup der kompletten Liste
 
     public PatientComboBoxModel(List<Patient> patients) {
-        this.patsBackup = patients;
+        this.patients = patients;
         for (Patient p : patients) {
-            this.addElement(p);
+            addElement(p);
         }
     }
 
     public void filter(String searchText) {
-        this.removeAllElements();
+        removeAllElements();
         String searchLower = searchText.toLowerCase();
-        for (Patient p : patsBackup) {
+        for (Patient p : patients) {
             if ( p.getFullName().toLowerCase().contains( searchLower )) {
-                this.addElement(p);
+                addElement(p);
             }
         }
         // Falls keine Treffer, bleibt die Liste leer
@@ -42,10 +42,10 @@ public class PatientComboBoxModel extends DefaultComboBoxModel<Patient> {
      * @param newPatients
      */
     public void refresh(List<Patient> newPatients) {
-        this.patsBackup = newPatients;
-        this.removeAllElements();
+        this.patients = newPatients;
+        removeAllElements();
         for (Patient p : newPatients) {
-            this.addElement(p);
+            addElement(p);
         }
     }
 
@@ -60,8 +60,12 @@ public class PatientComboBoxModel extends DefaultComboBoxModel<Patient> {
         jComboBox.repaint();
     }
 
+    /**
+     * Returns the unfiltered, cached List processed by this model.
+     * @return cached list
+     */
     public List<Patient> getList() {
-        return patsBackup;
+        return patients;
     }
 
     public String getSelectedItemName() {
